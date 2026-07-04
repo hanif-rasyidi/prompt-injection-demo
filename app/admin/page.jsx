@@ -107,7 +107,14 @@ export default function AdminPage() {
           <div style={{ lineHeight: 1.6 }}>{state.hint}</div>
         </Reveal>
 
-        <Reveal key={`a-${L}`} n={3} icon="🗝️" title="Example attack (a known-working exploit)">
+        <Reveal key={`a-${L}`} n={3} icon="🗝️"
+          title={state.boss ? "Example attack (best-effort — the boss may refuse it)" : "Example attack (a known-working exploit)"}>
+          {state.boss && (
+            <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>
+              ⚠ There's no guaranteed key here. This is a strong attempt; the hardened prompt usually
+              refuses it. That refusal is the lesson — you'd need to iterate hard (or get lucky) to win.
+            </div>
+          )}
           <pre className="raw" style={{ margin: 0 }}>{state.answer}</pre>
           <button style={{ marginTop: 8, background: "#2a2f3d", fontSize: 13, padding: "6px 12px" }}
             onClick={() => { navigator.clipboard?.writeText(state.answer); setCopied(true); }}>

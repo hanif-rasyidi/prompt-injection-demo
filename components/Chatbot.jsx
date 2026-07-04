@@ -87,13 +87,16 @@ export default function Chatbot() {
         <div ref={endRef} />
       </div>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <input
+      {/* textarea (not input) so multi-line payloads — transcripts, fake system
+          blocks, floods — keep their newlines. Enter sends, Shift+Enter = newline. */}
+      <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+        <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder="Type your question…"
-          style={{ flex: 1 }}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+          placeholder="Type your question…  (Enter = send, Shift+Enter = new line)"
+          rows={2}
+          style={{ flex: 1, resize: "vertical", minHeight: 46 }}
         />
         <button onClick={send} disabled={busy}>{busy ? "…" : "Send"}</button>
       </div>

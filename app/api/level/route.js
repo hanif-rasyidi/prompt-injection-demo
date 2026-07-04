@@ -30,6 +30,7 @@ export async function POST(req) {
     defense: meta.defense,
     hint: meta.hint,
     answer: meta.answer,
+    boss: Boolean(meta.boss),
     maxLevel: MAX_LEVEL,
     store: STORE,
   });

@@ -23,7 +23,8 @@ async function chatWithRetry(messages) {
 export async function POST(req) {
   const { message = "", id = "anon" } = await req.json();
 
-  if (message.length > 800) return Response.json({ reply: "That message is too long — keep it under 800 characters." });
+  // 4000 chars so L5 "instruction flooding" attacks are actually possible.
+  if (message.length > 4000) return Response.json({ reply: "That message is too long — keep it under 4000 characters." });
   if (!(await allow(id))) return Response.json({ reply: "⏳ One at a time — wait a second and try again." });
 
   const { level, flag } = await getState();

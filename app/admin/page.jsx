@@ -70,7 +70,15 @@ export default function AdminPage() {
                 {showPrompt ? "🙈 Hide" : "👁 Reveal"}
               </button>
             </div>
-            {showPrompt && <pre className="raw" style={{ marginTop: 10 }}>{state.systemPrompt}</pre>}
+            {showPrompt && (
+              <>
+                <pre className="raw" style={{ marginTop: 10 }}>{state.systemPrompt}</pre>
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                  The secret code is injected as a separate hidden system message — it is NOT in the
+                  prompt above, so you can show this to the audience without giving away the answer.
+                </div>
+              </>
+            )}
           </div>
 
           {/* reveal 2: secret code */}

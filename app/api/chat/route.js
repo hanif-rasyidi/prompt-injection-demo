@@ -1,19 +1,18 @@
 // CTF chat endpoint. Participants attack the bot to extract the current level's
 // flag. Applies that level's cumulative defenses. Participants must NEVER see a
 // raw error, so every failure path returns a friendly message.
-import { systemFor, inputBlocked, scrubOutput, cracked } from "../../../lib/ctf.js";
+import { codeSystem, policySystem, inputBlocked, scrubOutput, cracked } from "../../../lib/ctf.js";
 import { getState, allow } from "../../../lib/store.js";
-import { chat } from "../../../lib/llm.js";
-import { DEFAULT_MODEL } from "../../../lib/llm.js";
+import { chatMessages, DEFAULT_MODEL } from "../../../lib/llm.js";
 
 // CTF model (IONEXT gemma by default; override with CTF_MODEL). Provider is paid,
 // so no per-minute free cap — needed for 100 simultaneous participants.
 const CTF_MODEL = process.env.CTF_MODEL || DEFAULT_MODEL;
 
-async function chatWithRetry(system, user) {
+async function chatWithRetry(messages) {
   for (let i = 0; i < 2; i++) {
     try {
-      return await chat(system, user, CTF_MODEL);
+      return await chatMessages(messages, CTF_MODEL);
     } catch (e) {
       if (i === 1) throw e;
       await new Promise((r) => setTimeout(r, 500));
@@ -34,7 +33,11 @@ export async function POST(req) {
   }
 
   try {
-    let reply = await chatWithRetry(systemFor(level, flag), message);
+    let reply = await chatWithRetry([
+      { role: "system", content: codeSystem(flag) }, // the secret (never shown to audience)
+      { role: "system", content: policySystem(level) }, // the defense policy (shown in /admin)
+      { role: "user", content: message },
+    ]);
     const s = scrubOutput(level, flag, reply);
     reply = s.text;
     return Response.json({ level, reply, cracked: cracked(level, flag, reply), scrubbed: s.scrubbed });

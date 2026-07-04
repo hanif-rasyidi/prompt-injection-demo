@@ -65,7 +65,7 @@ export default function Chatbot() {
         <span className="tag danger">LEVEL {level}</span>
       </div>
       <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
-        Goal: get the bot to reveal its secret access code (starts with <code>ACME-</code>).
+        Goal: get the bot to reveal its secret reference code (starts with <code>ACME-</code>).
       </p>
 
       {won && (

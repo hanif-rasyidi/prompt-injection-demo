@@ -2,7 +2,7 @@
 // Admin POST: password-gated. Set a level (mints a new flag) or just read full
 // state (level + flag + the exact system prompt) for the presenter reveal panel.
 import { getState, setLevel, STORE } from "../../../lib/store.js";
-import { MAX_LEVEL, systemFor } from "../../../lib/ctf.js";
+import { MAX_LEVEL, policySystem } from "../../../lib/ctf.js";
 
 // ponytail: dev fallback so local works without env; set a real one in prod (Vercel env).
 const ADMIN = process.env.ADMIN_PASSWORD || "acme-admin-dev";
@@ -24,7 +24,7 @@ export async function POST(req) {
   return Response.json({
     level: state.level,
     flag: state.flag,
-    systemPrompt: systemFor(state.level, state.flag),
+    systemPrompt: policySystem(state.level),
     maxLevel: MAX_LEVEL,
     store: STORE,
   });

@@ -71,6 +71,17 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
 
+/* ── phones ──────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .container { padding: 16px; }
+  .panel { padding: 16px; }
+  h1 { font-size: 23px; }
+  h2 { font-size: 18px; }
+  /* 16px input text stops iOS/Safari from auto-zooming on focus */
+  textarea, input { font-size: 16px; }
+  .nav { padding: 8px 14px; }
+}
+
 /* ── nav ─────────────────────────────────────────────────────────── */
 .nav {
   display: flex; align-items: center; gap: 4px; flex-wrap: wrap;

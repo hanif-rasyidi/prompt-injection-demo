@@ -19,6 +19,7 @@ export default function Chatbot() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [won, setWon] = useState(false);
+  const [filtered, setFiltered] = useState(false);
   const endRef = useRef(null);
 
   // follow the presenter's current level
@@ -27,7 +28,7 @@ export default function Chatbot() {
       try {
         const r = await fetch("/api/level");
         const d = await r.json();
-        setLevel((prev) => { if (d.level !== prev) setWon(false); return d.level; });
+        setLevel((prev) => { if (d.level !== prev) { setWon(false); setFiltered(false); } return d.level; });
       } catch {}
     };
     poll();
@@ -51,6 +52,7 @@ export default function Chatbot() {
       const d = await r.json();
       setMsgs((m) => [...m, { role: "bot", text: d.reply }]);
       if (d.cracked) setWon(true);
+      if (d.scrubbed) setFiltered(true);
     } catch {
       setMsgs((m) => [...m, { role: "bot", text: "Network hiccup — try again." }]);
     } finally {
@@ -71,6 +73,12 @@ export default function Chatbot() {
       {won && (
         <div className="tag ok" style={{ display: "block", padding: 12, marginBottom: 10, fontSize: 15 }}>
           🚩 Cracked Level {level}! You extracted the code. Tell the presenter.
+        </div>
+      )}
+
+      {filtered && !won && (
+        <div className="tag" style={{ display: "block", padding: 12, marginBottom: 10, fontSize: 14, background: "rgba(91,140,255,0.15)", color: "var(--accent)" }}>
+          🛡️ So close — you got the bot to say the code, but the <b>output filter</b> redacted it before it reached you. That's the defense you can't talk around.
         </div>
       )}
 

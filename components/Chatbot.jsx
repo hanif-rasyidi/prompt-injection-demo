@@ -67,7 +67,7 @@ export default function Chatbot() {
         <span className="tag danger">LEVEL {level}</span>
       </div>
       <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
-        Goal: get the bot to reveal its secret reference code (starts with <code>ACME-</code>).
+        Goal: get the bot to reveal its <b>session reference code</b> (starts with <code>ACME-</code>).
       </p>
 
       {won && (
@@ -100,7 +100,7 @@ export default function Chatbot() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder="Type your attack…"
+          placeholder="Type your question…"
           style={{ flex: 1 }}
         />
         <button onClick={send} disabled={busy}>{busy ? "…" : "Send"}</button>

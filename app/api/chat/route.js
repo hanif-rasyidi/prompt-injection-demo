@@ -1,7 +1,7 @@
 // CTF chat endpoint. Participants attack the bot to extract the current level's
 // flag. Applies that level's cumulative defenses. Participants must NEVER see a
 // raw error, so every failure path returns a friendly message.
-import { codeSystem, policySystem, inputBlocked, scrubOutput, cracked } from "../../../lib/ctf.js";
+import { codeSystem, policySystem, cracked } from "../../../lib/ctf.js";
 import { getState, allow } from "../../../lib/store.js";
 import { chatMessages, DEFAULT_MODEL } from "../../../lib/llm.js";
 
@@ -29,19 +29,13 @@ export async function POST(req) {
 
   const { level, flag } = await getState();
 
-  if (inputBlocked(level, message)) {
-    return Response.json({ level, reply: "⚠ That looked like an attack and was blocked by the input filter.", cracked: false });
-  }
-
   try {
-    let reply = await chatWithRetry([
+    const reply = await chatWithRetry([
       { role: "system", content: codeSystem(flag) }, // the secret (never shown to audience)
       { role: "system", content: policySystem(level) }, // the defense policy (shown in /admin)
       { role: "user", content: message },
     ]);
-    const s = scrubOutput(level, flag, reply);
-    reply = s.text;
-    return Response.json({ level, reply, cracked: cracked(level, flag, reply), scrubbed: s.scrubbed });
+    return Response.json({ level, reply, cracked: cracked(level, flag, reply) });
   } catch {
     return Response.json({ level, reply: "The assistant is busy right now — try again in a moment." });
   }

@@ -1,0 +1,252 @@
+[
+  {
+    "id": "CUS-10000",
+    "name": "Yuki Silva",
+    "email": "yuki.silva0@example.com",
+    "plan": "Free",
+    "mrr_usd": 0,
+    "country": "GB",
+    "card_last4": "9432",
+    "note": "GDPR data-access request"
+  },
+  {
+    "id": "CUS-10001",
+    "name": "Ana Haddad",
+    "email": "ana.haddad1@example.com",
+    "plan": "Free",
+    "mrr_usd": 100,
+    "country": "JP",
+    "card_last4": "4341",
+    "note": "reported phishing email"
+  },
+  {
+    "id": "CUS-10002",
+    "name": "Omar Berg",
+    "email": "omar.berg2@example.com",
+    "plan": "Starter",
+    "mrr_usd": 49,
+    "country": "FR",
+    "card_last4": "3180",
+    "note": "API rate-limit increase"
+  },
+  {
+    "id": "CUS-10003",
+    "name": "Ivan Ali",
+    "email": "ivan.ali3@example.com",
+    "plan": "Enterprise",
+    "mrr_usd": 4200,
+    "country": "KE",
+    "card_last4": "7699",
+    "note": "SSO setup pending"
+  },
+  {
+    "id": "CUS-10004",
+    "name": "Elena Chen",
+    "email": "elena.chen4@example.com",
+    "plan": "Growth",
+    "mrr_usd": 1150,
+    "country": "KE",
+    "card_last4": "6659",
+    "note": "reported phishing email"
+  },
+  {
+    "id": "CUS-10005",
+    "name": "Sven Ahmed",
+    "email": "sven.ahmed5@example.com",
+    "plan": "Free",
+    "mrr_usd": 0,
+    "country": "GB",
+    "card_last4": "4800",
+    "note": "SSO setup pending"
+  },
+  {
+    "id": "CUS-10006",
+    "name": "Liam Garcia",
+    "email": "liam.garcia6@example.com",
+    "plan": "Starter",
+    "mrr_usd": 0,
+    "country": "DE",
+    "card_last4": "2268",
+    "note": ""
+  },
+  {
+    "id": "CUS-10007",
+    "name": "Zara Okonkwo",
+    "email": "zara.okonkwo7@example.com",
+    "plan": "Enterprise",
+    "mrr_usd": 4200,
+    "country": "US",
+    "card_last4": "9489",
+    "note": "reported phishing email"
+  },
+  {
+    "id": "CUS-10008",
+    "name": "Diego Sharma",
+    "email": "diego.sharma8@example.com",
+    "plan": "Free",
+    "mrr_usd": 100,
+    "country": "SE",
+    "card_last4": "8528",
+    "note": "churn risk - flagged"
+  },
+  {
+    "id": "CUS-10009",
+    "name": "Hassan Murphy",
+    "email": "hassan.murphy9@example.com",
+    "plan": "Enterprise",
+    "mrr_usd": 4200,
+    "country": "BR",
+    "card_last4": "8233",
+    "note": "API rate-limit increase"
+  },
+  {
+    "id": "CUS-10010",
+    "name": "Mei Khan",
+    "email": "mei.khan10@example.com",
+    "plan": "Enterprise",
+    "mrr_usd": 4200,
+    "country": "NG",
+    "card_last4": "0572",
+    "note": ""
+  },
+  {
+    "id": "CUS-10011",
+    "name": "Priya Costa",
+    "email": "priya.costa11@example.com",
+    "plan": "Pro",
+    "mrr_usd": 499,
+    "country": "BR",
+    "card_last4": "3468",
+    "note": "disputed invoice"
+  },
+  {
+    "id": "CUS-10012",
+    "name": "Sven Garcia",
+    "email": "sven.garcia12@example.com",
+    "plan": "Starter",
+    "mrr_usd": 49,
+    "country": "AU",
+    "card_last4": "0537",
+    "note": "reported phishing email"
+  },
+  {
+    "id": "CUS-10013",
+    "name": "Mei Ali",
+    "email": "mei.ali13@example.com",
+    "plan": "Enterprise",
+    "mrr_usd": 4250,
+    "country": "NG",
+    "card_last4": "4574",
+    "note": "past-due balance"
+  },
+  {
+    "id": "CUS-10014",
+    "name": "Hugo Diallo",
+    "email": "hugo.diallo14@example.com",
+    "plan": "Free",
+    "mrr_usd": 100,
+    "country": "KE",
+    "card_last4": "9624",
+    "note": "disputed invoice"
+  },
+  {
+    "id": "CUS-10015",
+    "name": "Mei Berg",
+    "email": "mei.berg15@example.com",
+    "plan": "Free",
+    "mrr_usd": 0,
+    "country": "IN",
+    "card_last4": "8255",
+    "note": "admin seat upgrade"
+  },
+  {
+    "id": "CUS-10016",
+    "name": "Noah Rossi",
+    "email": "noah.rossi16@example.com",
+    "plan": "Starter",
+    "mrr_usd": 49,
+    "country": "NG",
+    "card_last4": "4916",
+    "note": "reported phishing email"
+  },
+  {
+    "id": "CUS-10017",
+    "name": "Ingrid Wei",
+    "email": "ingrid.wei17@example.com",
+    "plan": "Pro",
+    "mrr_usd": 499,
+    "country": "CA",
+    "card_last4": "8553",
+    "note": "API rate-limit increase"
+  },
+  {
+    "id": "CUS-10018",
+    "name": "Elena Patel",
+    "email": "elena.patel18@example.com",
+    "plan": "Pro",
+    "mrr_usd": 449,
+    "country": "SE",
+    "card_last4": "1396",
+    "note": "SSO setup pending"
+  },
+  {
+    "id": "CUS-10019",
+    "name": "Kofi Rossi",
+    "email": "kofi.rossi19@example.com",
+    "plan": "Starter",
+    "mrr_usd": 49,
+    "country": "ID",
+    "card_last4": "4786",
+    "note": "requested refund"
+  },
+  {
+    "id": "CUS-10020",
+    "name": "Chen Rossi",
+    "email": "chen.rossi20@example.com",
+    "plan": "Enterprise",
+    "mrr_usd": 4150,
+    "country": "JP",
+    "card_last4": "2275",
+    "note": "admin seat upgrade"
+  },
+  {
+    "id": "CUS-10021",
+    "name": "Ivan Nilsson",
+    "email": "ivan.nilsson21@example.com",
+    "plan": "Enterprise",
+    "mrr_usd": 4200,
+    "country": "MX",
+    "card_last4": "8699",
+    "note": "admin seat upgrade"
+  },
+  {
+    "id": "CUS-10022",
+    "name": "Zara Ahmed",
+    "email": "zara.ahmed22@example.com",
+    "plan": "Starter",
+    "mrr_usd": 49,
+    "country": "NG",
+    "card_last4": "5843",
+    "note": "VIP - white glove"
+  },
+  {
+    "id": "CUS-10023",
+    "name": "Marco Ali",
+    "email": "marco.ali23@example.com",
+    "plan": "Enterprise",
+    "mrr_usd": 4250,
+    "country": "IN",
+    "card_last4": "9286",
+    "note": "reported phishing email"
+  },
+  {
+    "id": "CUS-10024",
+    "name": "Mei Reyes",
+    "email": "mei.reyes24@example.com",
+    "plan": "Growth",
+    "mrr_usd": 1200,
+    "country": "IN",
+    "card_last4": "3780",
+    "note": "reported phishing email"
+  }
+]

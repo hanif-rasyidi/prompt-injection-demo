@@ -1,7 +1,7 @@
 // Public GET: current level only (participants poll this — must NOT leak the flag).
 // Admin POST: password-gated. Set a level (mints a new flag) or just read full
 // state (level + flag + the exact system prompt) for the presenter reveal panel.
-import { getState, setLevel } from "../../../lib/store.js";
+import { getState, setLevel, STORE } from "../../../lib/store.js";
 import { MAX_LEVEL, systemFor } from "../../../lib/ctf.js";
 
 // ponytail: dev fallback so local works without env; set a real one in prod (Vercel env).
@@ -26,5 +26,6 @@ export async function POST(req) {
     flag: state.flag,
     systemPrompt: systemFor(state.level, state.flag),
     maxLevel: MAX_LEVEL,
+    store: STORE,
   });
 }

@@ -44,6 +44,12 @@ export default function AdminPage() {
         <div style={{ display: "grid", gap: 16, maxWidth: 720 }}>
           {/* level control */}
           <div className="panel">
+            <div style={{ fontSize: 13, marginBottom: 8 }}>
+              Storage:{" "}
+              {state.store === "redis"
+                ? <span className="tag ok">🟢 redis (shared — multi-user ready)</span>
+                : <span className="tag danger">🟡 in-memory (single instance — set Upstash env vars)</span>}
+            </div>
             <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>Live level (changing it mints a fresh code)</div>
             <div style={{ display: "flex", gap: 8 }}>
               {Array.from({ length: state.maxLevel }, (_, i) => i + 1).map((n) => (

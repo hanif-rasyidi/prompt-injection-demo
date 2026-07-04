@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const SCENARIOS = [
   { href: "/support", tag: "①", title: "Public Support Chatbot", type: "Direct injection",
-    blurb: "A visitor talks to the bot and types attacks to extract its hidden secret. The attacker IS the user." },
+    blurb: "A visitor talks to the bot and types attacks to extract its session reference code. The attacker IS the user." },
   { href: "/docs", tag: "②", title: "Ask the Docs (RAG)", type: "Indirect via document",
     blurb: "A normal question retrieves a community-submitted article — which hides instructions the assistant obeys." },
   { href: "/console", tag: "③", title: "Internal Agent Console", type: "Human review bypassed",

@@ -21,7 +21,7 @@ function Reveal({ n, icon, title, children }) {
 
 // Presenter-only control + teaching panel. Run the flow top to bottom:
 // set level → show system prompt → let them try → reveal hint → try again →
-// reveal example attack → reveal the secret code. Everything sensitive is hidden
+// reveal example attack → reveal the session reference code. Everything sensitive is hidden
 // until you click, and re-hides whenever you change level.
 export default function AdminPage() {
   const [admin, setAdmin] = useState("");
@@ -98,8 +98,8 @@ export default function AdminPage() {
         <Reveal key={`p-${L}`} n={1} icon="🧠" title="System prompt (safe to show the audience)">
           <pre className="raw">{state.systemPrompt}</pre>
           <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-            The secret code is a separate hidden system message — it's NOT in the prompt above, so you can
-            show this without giving away the answer. Let them strategise from it.
+            The session reference code is a separate hidden system message — it's NOT in the prompt above, so
+            you can show this without giving away the answer. Let them strategise from it.
           </div>
         </Reveal>
 
@@ -115,7 +115,7 @@ export default function AdminPage() {
           </button>
         </Reveal>
 
-        <Reveal key={`c-${L}`} n={4} icon="🔑" title="The secret code they're hunting">
+        <Reveal key={`c-${L}`} n={4} icon="🔑" title="The session reference code they're hunting">
           <span className="tag danger" style={{ fontSize: 16, padding: "6px 14px" }}>{state.flag}</span>
           <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>
             Regenerated every time you change level — the code they just cracked won't work again.

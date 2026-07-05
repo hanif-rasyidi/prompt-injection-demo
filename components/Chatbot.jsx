@@ -1,6 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+
+// The model sometimes wraps symbols in LaTeX (e.g. "$\rightarrow$"); react-markdown
+// doesn't render math, so convert the common ones to plain arrows first.
+const mdClean = (t = "") =>
+  t.replace(/\$\s*\\?(rightarrow|to)\s*\$/gi, "→")
+   .replace(/\$\s*\\?(leftarrow|gets)\s*\$/gi, "←")
+   .replace(/\\rightarrow/g, "→").replace(/\\leftarrow/g, "←");
 
 function useParticipantId() {
   const [id, setId] = useState("anon");
@@ -77,11 +85,14 @@ export default function Chatbot() {
       <div style={{ height: 320, overflowY: "auto", background: "#0c0e14", border: "1px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10 }}>
         {msgs.map((m, i) => (
           <div key={i} style={{ margin: "8px 0", textAlign: m.role === "you" ? "right" : "left" }}>
-            <span style={{
+            <span className={m.role === "you" ? undefined : "bot-md"} style={{
               display: "inline-block", padding: "8px 12px", borderRadius: 10, maxWidth: "85%",
               background: m.role === "you" ? "var(--accent)" : "#1a1d27",
-              color: m.role === "you" ? "#fff" : "var(--text)", whiteSpace: "pre-wrap", textAlign: "left",
-            }}>{m.text}</span>
+              color: m.role === "you" ? "#fff" : "var(--text)",
+              whiteSpace: m.role === "you" ? "pre-wrap" : "normal", textAlign: "left",
+            }}>
+              {m.role === "you" ? m.text : <ReactMarkdown>{mdClean(m.text)}</ReactMarkdown>}
+            </span>
           </div>
         ))}
         <div ref={endRef} />

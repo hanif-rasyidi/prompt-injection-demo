@@ -71,6 +71,17 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
 
+/* ── markdown inside chat bubbles ────────────────────────────────── */
+.bot-md > :first-child { margin-top: 0; }
+.bot-md > :last-child { margin-bottom: 0; }
+.bot-md p { margin: 0 0 8px; }
+.bot-md ol, .bot-md ul { margin: 6px 0; padding-left: 22px; }
+.bot-md li { margin: 2px 0; }
+.bot-md code { background: rgba(255,255,255,0.12); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+.bot-md pre { background: #0c0e14; padding: 10px; border-radius: 6px; overflow: auto; }
+.bot-md pre code { background: none; padding: 0; }
+.bot-md a { color: var(--accent); }
+
 /* ── phones ──────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .container { padding: 16px; }

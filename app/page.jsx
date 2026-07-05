@@ -3,11 +3,11 @@ import Link from "next/link";
 const SCENARIOS = [
   { href: "/support", tag: "①", title: "Public Support Chatbot", type: "Direct injection",
     blurb: "A visitor talks to the bot and types attacks to extract its session reference code. The attacker IS the user." },
-  { href: "/docs", tag: "②", title: "Ask the Docs (RAG)", type: "Indirect via document",
+  { href: "/docs", tag: "②", title: "Ask the Docs (RAG)", type: "Indirect via document", soon: true,
     blurb: "A normal question retrieves a community-submitted article — which hides instructions the assistant obeys." },
   { href: "/console", tag: "③", title: "Internal Agent Console", type: "Human review bypassed",
     blurb: "An agent approves a clean-looking ticket. The AI reads the raw source — with an invisible payload — and leaks." },
-  { href: "/ops", tag: "④", title: "Auto-Triage Automation", type: "Zero-click",
+  { href: "/ops", tag: "④", title: "Auto-Triage Automation", type: "Zero-click", soon: true,
     blurb: "No human at all. An incoming ticket is auto-processed and exfiltrated. The purest EchoLeak." },
 ];
 
@@ -26,15 +26,22 @@ export default function Home() {
       </div>
 
       <div className="grid2">
-        {SCENARIOS.map((s) => (
-          <Link key={s.href} href={s.href} className="panel" style={{ textDecoration: "none", color: "inherit" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2 style={{ margin: 0 }}><span className="muted">{s.tag}</span> {s.title}</h2>
-              <span className="tag danger">{s.type}</span>
-            </div>
-            <p className="muted" style={{ marginBottom: 0 }}>{s.blurb}</p>
-          </Link>
-        ))}
+        {SCENARIOS.map((s) => {
+          const inner = (
+            <>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                <h2 style={{ margin: 0 }}><span className="muted">{s.tag}</span> {s.title}</h2>
+                <span className={`tag ${s.soon ? "" : "danger"}`}>{s.soon ? "🔒 coming soon" : s.type}</span>
+              </div>
+              <p className="muted" style={{ marginBottom: 0 }}>{s.blurb}</p>
+            </>
+          );
+          return s.soon ? (
+            <div key={s.href} className="panel" style={{ opacity: 0.55, cursor: "default" }}>{inner}</div>
+          ) : (
+            <Link key={s.href} href={s.href} className="panel" style={{ textDecoration: "none", color: "inherit" }}>{inner}</Link>
+          );
+        })}
       </div>
     </div>
   );

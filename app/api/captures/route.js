@@ -1,9 +1,11 @@
-// Read/clear the attacker's capture log (used by the /attacker panel).
+// Read/clear the attacker's capture log (used by the ③/④ attacker panel).
+import { getCaptures, clearCaptures } from "../../../lib/store.js";
+
 export async function GET() {
-  return Response.json({ captures: globalThis.__captures ?? [] });
+  return Response.json({ captures: await getCaptures() });
 }
 
 export async function DELETE() {
-  globalThis.__captures = [];
+  await clearCaptures();
   return Response.json({ ok: true });
 }

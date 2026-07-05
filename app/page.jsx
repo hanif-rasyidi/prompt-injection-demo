@@ -7,7 +7,7 @@ const SCENARIOS = [
     blurb: "A normal question retrieves a community-submitted article — which hides instructions the assistant obeys." },
   { href: "/console", tag: "③", title: "Internal Agent Console", type: "Human review bypassed",
     blurb: "An agent approves a clean-looking ticket. The AI reads the raw source — with an invisible payload — and leaks." },
-  { href: "/ops", tag: "④", title: "Auto-Triage Automation", type: "Zero-click", soon: true,
+  { href: "/ops", tag: "④", title: "Auto-Triage Automation", type: "Zero-click",
     blurb: "No human at all. An incoming ticket is auto-processed and exfiltrated. The purest EchoLeak." },
 ];
 

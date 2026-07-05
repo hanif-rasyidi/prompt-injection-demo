@@ -6,13 +6,10 @@
 // This is the EchoLeak exfiltration sink: a URL that leaks data simply by being
 // auto-fetched when the markdown image renders. No click. No consent.
 //
-// ponytail: the in-memory buffer below is shared across requests within ONE running
-// process — perfect for local `npm run dev` (our primary demo/rehearsal path). On
-// Vercel's serverless functions there is no shared memory, so the live capture PANEL
-// there needs a tiny KV store (a documented Phase-3 add-on). The LEAK itself works
-// anywhere; only the on-page display needs shared state.
-
-const captures = globalThis.__captures ?? (globalThis.__captures = []);
+// Captures are stored via lib/store.js — Redis when configured (so the panel works
+// across Vercel's serverless instances), in-memory locally. The LEAK works anywhere;
+// only the on-page display needs shared state.
+import { pushCapture } from "../../../lib/store.js";
 
 // 1x1 transparent GIF
 const PIXEL = Buffer.from(
@@ -23,8 +20,7 @@ const PIXEL = Buffer.from(
 export async function GET(req) {
   const data = new URL(req.url).searchParams.get("d");
   if (data) {
-    captures.unshift({ at: new Date().toISOString(), data });
-    if (captures.length > 50) captures.pop();
+    await pushCapture(data);
     console.log("🚨 EXFILTRATION CAPTURED:", data.slice(0, 300));
   }
   return new Response(PIXEL, {

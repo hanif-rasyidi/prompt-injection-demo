@@ -39,6 +39,7 @@ export default function ConsoleScenario() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source: sourceForAI,
+          poisoned: Boolean(ticket.poisoned),
           defenses: defensesOn ? "on" : "off",
           layers: defensesOn ? layers : undefined,
           model: defensesOn ? model : undefined,

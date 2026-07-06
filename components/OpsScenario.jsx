@@ -23,6 +23,7 @@ export default function OpsScenario() {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         source,
+        poisoned: Boolean(t.poisoned),
         defenses: defensesOn ? "on" : "off",
         layers: defensesOn ? layers : undefined,
         model: defensesOn ? model : undefined,

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { DOCS_HINT } from "../lib/docs.js";
+import { markCracked } from "../lib/progress.js";
 
 // Same id key as the CTF chatbot, so a participant keeps one identity across scenarios.
 function useParticipantId() {
@@ -42,7 +43,9 @@ export default function DocsChallenge() {
           model: defensesOn ? model : undefined,
         }),
       });
-      setRes(await r.json());
+      const d = await r.json();
+      setRes(d);
+      if (d.won) markCracked("docs");
     } catch (e) {
       setRes({ error: String(e) });
     } finally {
@@ -105,14 +108,14 @@ export default function DocsChallenge() {
           <div style={{ color: "var(--danger)" }}>⚠ {res.error}</div>
         ) : (
           <>
-            <div style={{ marginBottom: 8 }}>
-              {res.won ? (
-                <span className="tag danger">🚩 Cracked — you leaked the internal key!</span>
-              ) : (
+            {res.won ? (
+              <div className="cracked-banner">🚩 Cracked — your poisoned article made the bot leak its internal key! 🎉</div>
+            ) : (
+              <div style={{ marginBottom: 8 }}>
                 <span className="tag ok">🛡 Key held{defensesOn ? " — defenses stopped you" : " — try a different framing"}</span>
-              )}
-              {res.blocked > 0 && <span className="tag ok" style={{ marginLeft: 6 }}>L3 stripped {res.blocked} link(s)</span>}
-            </div>
+                {res.blocked > 0 && <span className="tag ok" style={{ marginLeft: 6 }}>L3 stripped {res.blocked} link(s)</span>}
+              </div>
+            )}
             <div className="email bot-md" style={{ background: "#0c0e14", color: "var(--text)" }}>
               <ReactMarkdown>{res.reply}</ReactMarkdown>
             </div>

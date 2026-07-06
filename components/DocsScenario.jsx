@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { KB, answerHijacked } from "../lib/docs.js";
+import DocsChallenge from "./DocsChallenge.jsx";
 
 const escapeHtml = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const highlightPayload = (e) => e.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="payload">$1</span>');
@@ -18,6 +19,7 @@ export default function DocsScenario() {
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState(null);
   const [raw, setRaw] = useState({});
+  const [mode, setMode] = useState("demo");
 
   async function ask() {
     if (!question.trim() || loading) return;
@@ -47,9 +49,26 @@ export default function DocsScenario() {
     <div className="container">
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <h1 style={{ margin: 0 }}>② Ask the Docs</h1>
-        <span className={`tag ${defensesOn ? "ok" : "danger"}`}>{defensesOn ? "HARDENED" : "VULNERABLE"}</span>
+        {mode === "demo" && <span className={`tag ${defensesOn ? "ok" : "danger"}`}>{defensesOn ? "HARDENED" : "VULNERABLE"}</span>}
         <span className="tag danger">INDIRECT INJECTION</span>
       </div>
+
+      <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
+        <button onClick={() => setMode("demo")} style={{ background: mode === "demo" ? "" : "#2a2f3d" }}>🎭 Guided demo</button>
+        <button onClick={() => setMode("attack")} style={{ background: mode === "attack" ? "" : "#2a2f3d" }}>🎯 Your turn — attack it</button>
+      </div>
+
+      {mode === "attack" ? (
+        <>
+          <p className="muted">
+            Now <b>you're</b> the attacker — but you never talk to the bot. Poison a wiki article it will
+            retrieve, then let it answer someone else's innocent question. Crack it, then flip defenses on
+            and see them stop you.
+          </p>
+          <DocsChallenge />
+        </>
+      ) : (
+      <>
       <p className="muted">
         The user asks an innocent question. The assistant retrieves knowledge-base articles to answer —
         but one is a <b>community-submitted</b> page with a hidden instruction. The attacker never talks
@@ -160,6 +179,8 @@ export default function DocsScenario() {
           )}
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

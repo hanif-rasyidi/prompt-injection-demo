@@ -45,7 +45,8 @@ export async function POST(req) {
     let reply;
     if (demo) {
       // Replay a REAL captured output for the matching situation.
-      if (!defensesOn) reply = FIXTURES.vulnLeak; // vulnerable app leaks
+      if (body.poisoned === false) reply = FIXTURES.benign; // benign ticket → clean summary, no exfil
+      else if (!defensesOn) reply = FIXTURES.vulnLeak; // vulnerable app leaks
       else reply = body.model === "weak" || !L.hierarchy ? FIXTURES.weakLeak : FIXTURES.refusalRobust;
       reply = reply.replaceAll("COLLECT_ORIGIN", origin);
     } else {

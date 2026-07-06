@@ -64,6 +64,47 @@ the full run-of-show are in **[PRESENTER_GUIDE.md](./PRESENTER_GUIDE.md)**.
 **Thesis:** a prompt is a *policy, not a wall*. The guarantee is architecture —
 filter egress (L3 + CSP), least privilege, treat every external byte as hostile.
 
+## The on-screen controls (②③④)
+
+Every non-CTF scenario has the same control cluster:
+
+- **Defenses ON/OFF** — the master switch. OFF = the raw, vulnerable app (payload
+  goes straight to the model, output ships unfiltered). ON = the four hardening
+  layers apply.
+- **Layer checkboxes** (when Defenses ON) — toggle L1–L4 individually to show what
+  each buys you. The teaching beat: turn on **only L3** and the exfil is still
+  neutralised *even when the model was fooled* — output filtering is the backstop.
+- **Model selector** — `robust` (the well-aligned model) vs `weak` (a model that
+  follows the injection). Lets you show that L2 (a prompt rule) is only as strong as
+  the model behind it — the same hardened prompt leaks on the weak model.
+
+### Deterministic (no API) — what the checkbox does
+
+It changes **only where the AI's reply comes from**; everything else on the page is
+identical.
+
+| | ✅ Deterministic (checked) | ⬜ Live (unchecked) |
+|---|---|---|
+| Reply source | **replays a pre-recorded output** (a captured fixture in `lib/fixtures.js`) | **calls the real model** (`lib/llm.js` → IONEXT) fresh each time |
+| Network / cost | none — fully offline, free | one API call per ticket/question |
+| Result | identical every run, instant | varies run-to-run, ~1s+, can rate-limit or error |
+| Decides the outcome | a script (poisoned→leak, benign→clean, defenses→blocked) | the model's actual behaviour that moment |
+
+The fixtures are **real outputs captured from the model earlier**, not fakes — so
+deterministic mode is a faithful *re-enactment* that always fires on cue. Live mode is
+the genuine article but variable.
+
+**When to use which:**
+- **On stage → keep it checked.** Reliable, instant, free, immune to Wi-Fi / rate-limit
+  hiccups in front of a full room. This is the default.
+- **Uncheck once** for a "let's prove it's really the model" moment — best on ① (CTF)
+  or ④, which break live for real. On ②/③ the model's alignment often *resists* the
+  payload live, which is exactly why deterministic is the reliable path there.
+
+> Note: the exfil endpoint is `/api/badge` (not `/api/collect`) so ad/tracking blockers
+> in participants' browsers don't silently drop the beacon; the payload data is
+> URL-encoded so the markdown image actually renders and fires the collector.
+
 ---
 
 ## Run locally

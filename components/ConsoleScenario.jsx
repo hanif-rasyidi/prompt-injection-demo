@@ -40,6 +40,7 @@ export default function ConsoleScenario() {
         body: JSON.stringify({
           source: sourceForAI,
           poisoned: Boolean(ticket.poisoned),
+          benignSummary: ticket.demoSummary,
           defenses: defensesOn ? "on" : "off",
           layers: defensesOn ? layers : undefined,
           model: defensesOn ? model : undefined,

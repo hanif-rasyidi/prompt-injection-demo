@@ -65,8 +65,12 @@ filtering catches it even when the model is fooled."*
 
 ### 1:00–1:05 · ④ Auto-triage (finale / elastic buffer)
 
-`/ops` → Defenses OFF → **▶ Run the automation** → the poisoned ticket exfiltrates with
-zero human clicks → Defenses ON → blocked. Stretch or compress this to fit the clock.
+`/ops` opens with a **How this works** walkthrough and four queued tickets. First
+**expand Marco's ticket** and flip to **Raw source** — show the hidden payload the
+human never sees. Then Defenses OFF → **▶ Run the automation**: only Marco's row goes
+🚨 **exfiltrated** and the attacker log fills — zero human clicks; the three benign
+tickets just get normal summaries. Flip Defenses ON (each layer is explained inline on
+the page) → blocked. Stretch or compress to fit the clock.
 
 ---
 

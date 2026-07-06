@@ -24,6 +24,7 @@ export default function OpsScenario() {
       body: JSON.stringify({
         source,
         poisoned: Boolean(t.poisoned),
+        benignSummary: t.demoSummary,
         defenses: defensesOn ? "on" : "off",
         layers: defensesOn ? layers : undefined,
         model: defensesOn ? model : undefined,

@@ -31,7 +31,8 @@ API call (for reliable stage demos).
 
 Exfiltration uses the **EchoLeak** mechanism (CVE-2025-32711): the model is tricked
 into emitting a markdown image whose URL carries the stolen data; the browser
-auto-loads it, hitting the attacker's collector (`/api/collect`). The live
+auto-loads it, hitting the attacker's collector (`/api/badge`, named innocuously so
+ad-blockers don't eat the beacon). The live
 **Attacker Log** (`/attacker`, Redis-backed) shows captures across all users.
 
 ## The three hands-on challenges
@@ -106,7 +107,7 @@ npm run dev                         # http://localhost:3000
 ```
 app/            routes: page.jsx (landing), support, docs, console, ops, defense,
                 admin, attacker, and /api/* handlers (chat, docs, console, level,
-                collect, captures)
+                badge, captures)
 components/     Chatbot, DocsScenario+DocsChallenge, ConsoleScenario+TicketChallenge,
                 OpsScenario, AttackerLog, Progress, Nav
 lib/            ctf.js (CTF ladder), docs.js (RAG + challenge), prompts.js, secrets.js,

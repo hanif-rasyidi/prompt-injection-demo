@@ -62,7 +62,7 @@ export default function ConsoleScenario() {
         {mode === "demo" && <span className={`tag ${defensesOn ? "ok" : "danger"}`}>{defensesOn ? "HARDENED" : "VULNERABLE"}</span>}
       </div>
 
-      <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
+      <div className="modetabs">
         <button onClick={() => setMode("demo")} style={{ background: mode === "demo" ? "" : "#2a2f3d" }}>🎭 Guided demo</button>
         <button onClick={() => setMode("attack")} style={{ background: mode === "attack" ? "" : "#2a2f3d" }}>🎯 Your turn — attack it</button>
       </div>

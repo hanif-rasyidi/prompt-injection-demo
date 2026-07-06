@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import AttackerLog from "./AttackerLog.jsx";
+import { markCracked } from "../lib/progress.js";
 
 const layerLabels = { delimit: "L1 delimit", hierarchy: "L2 hierarchy", allowlist: "L3 allowlist", cap: "L4 cap" };
 const STARTER = `Subject: Locked out before a demo
@@ -41,7 +42,9 @@ export default function TicketChallenge() {
           model: defensesOn ? model : undefined,
         }),
       });
-      setRes(await r.json());
+      const d = await r.json();
+      setRes(d);
+      if (!d.error && /\/api\/collect\?d=/.test(d.reply || "")) markCracked("ticket");
     } catch (e) {
       setRes({ error: String(e) });
     } finally {
@@ -110,14 +113,14 @@ export default function TicketChallenge() {
               <div style={{ color: "var(--danger)" }}>⚠ {res.error}</div>
             ) : (
               <>
-                <div style={{ marginBottom: 8 }}>
-                  {leaked ? (
-                    <span className="tag danger">🚩 Exfiltrated — check the attacker log →</span>
-                  ) : (
+                {leaked ? (
+                  <div className="cracked-banner">🚩 Exfiltrated! The secrets just hit your collector — check the attacker log → 🎉</div>
+                ) : (
+                  <div style={{ marginBottom: 8 }}>
                     <span className="tag ok">🛡 Nothing left the building{defensesOn ? " — defenses held" : " — try again"}</span>
-                  )}
-                  {res.blocked > 0 && <span className="tag ok" style={{ marginLeft: 6 }}>L3 neutralised {res.blocked} URL(s)</span>}
-                </div>
+                    {res.blocked > 0 && <span className="tag ok" style={{ marginLeft: 6 }}>L3 neutralised {res.blocked} URL(s)</span>}
+                  </div>
+                )}
                 <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>🤖 AI summary (rendered — images auto-load):</div>
                 <div className="email bot-md" style={{ background: "#0c0e14", color: "var(--text)" }}>
                   <ReactMarkdown>{res.reply}</ReactMarkdown>

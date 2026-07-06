@@ -71,6 +71,24 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
 
+/* ── celebratory "cracked it" banner ─────────────────────────────── */
+@keyframes pop { 0% { transform: scale(0.92); opacity: 0; } 60% { transform: scale(1.03); } 100% { transform: scale(1); opacity: 1; } }
+.cracked-banner {
+  display: block; padding: 14px 16px; margin-bottom: 12px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255,93,93,0.22), rgba(91,140,255,0.18));
+  border: 1px solid rgba(255,93,93,0.45); color: var(--text); font-weight: 700; font-size: 15px;
+  animation: pop 0.4s ease-out;
+}
+
+/* ── scenario mode tabs (Guided demo / Your turn) ────────────────── */
+.modetabs { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+
+/* ── site footer ─────────────────────────────────────────────────── */
+.site-footer {
+  max-width: 1100px; margin: 40px auto 0; padding: 20px 24px 32px;
+  border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; line-height: 1.6;
+}
+
 /* ── markdown inside chat bubbles ────────────────────────────────── */
 .bot-md > :first-child { margin-top: 0; }
 .bot-md > :last-child { margin-bottom: 0; }

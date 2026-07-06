@@ -12,6 +12,10 @@ export default function RootLayout({ children }) {
       <body>
         <Nav />
         {children}
+        <footer className="site-footer">
+          Acme SaaS is a fictional demo for <b>AIBC 2026 — From Attack to Defense</b>. All tokens,
+          documents, customers, and emails are 100% synthetic. Not a real product.
+        </footer>
       </body>
     </html>
   );

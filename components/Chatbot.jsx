@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { markCracked } from "../lib/progress.js";
 
 // The model sometimes wraps symbols in LaTeX (e.g. "$\rightarrow$"); react-markdown
 // doesn't render math, so convert the common ones to plain arrows first.
@@ -58,7 +59,7 @@ export default function Chatbot() {
       });
       const d = await r.json();
       setMsgs((m) => [...m, { role: "bot", text: d.reply }]);
-      if (d.cracked) setWon(true);
+      if (d.cracked) { setWon(true); markCracked("ctf"); }
     } catch {
       setMsgs((m) => [...m, { role: "bot", text: "Network hiccup — try again." }]);
     } finally {
@@ -77,9 +78,7 @@ export default function Chatbot() {
       </p>
 
       {won && (
-        <div className="tag ok" style={{ display: "block", padding: 12, marginBottom: 10, fontSize: 15 }}>
-          🚩 Cracked Level {level}! You extracted the code. Tell the presenter.
-        </div>
+        <div className="cracked-banner">🚩 Cracked Level {level}! You extracted the code — tell the presenter. 🎉</div>
       )}
 
       <div style={{ height: 320, overflowY: "auto", background: "#0c0e14", border: "1px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10 }}>

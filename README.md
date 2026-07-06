@@ -1,42 +1,115 @@
 # Acme SaaS — Prompt Injection Demo
 
 A hands-on teaching app for the talk **"From Attack to Defense: A Practical Guide to
-Prompt Injection in LLM Systems"** (AIBC 2026). It shows real, documented indirect
-prompt-injection patterns (OWASP LLM01; modelled on the EchoLeak / CVE-2025-32711
-mechanism) and the layered defenses that stop them.
+Prompt Injection in LLM Systems"** (AIBC 2026). "Acme SaaS" is a fictional support
+platform with four AI surfaces. Participants **attack each one from their phones**,
+then flip **Defenses ON** and watch the same attack get stopped — the whole
+*attack → defense* arc, live.
 
-> ⚠️ **All data is 100% synthetic.** Fake tokens, `example.com` emails, a fabricated
-> "incident report". Nothing here is real. Don't put real secrets in this repo.
+> ⚠️ **Everything here is 100% synthetic.** Fake tokens (prefixed `acme_live_`, not
+> `sk_`), `example.com` / `example.net` addresses, a fabricated incident report,
+> made-up customers. Nothing is real. Never put a real secret in this repo — API keys
+> live only in `.env.local` (git-ignored) and Vercel env vars, and are used **only**
+> in server routes so they never reach the browser.
 
-## Scenarios
+---
 
-- **① Break the Bot** (`/support`) — a live CTF: extract the chatbot's secret code.
-  The presenter raises the level from `/admin`; each level adds one more defense.
-- **③ Agent Console** (`/console`) — an agent approves a clean-looking ticket, but the
-  AI reads the raw source (with a hidden payload) and exfiltrates data.
-- ④ Auto-triage (zero-click) and ② RAG poisoning — *work in progress*.
+## The four scenarios
+
+Each maps to a real prompt-injection class (OWASP LLM01). Every scenario has a
+**Defenses ON/OFF** toggle, individual layer toggles, a model selector
+(robust ↔ weak), and a **Deterministic** mode that replays captured fixtures with no
+API call (for reliable stage demos).
+
+| # | Route | Class | The attack | Hands-on? |
+|---|-------|-------|-----------|-----------|
+| **①** | `/support` | **Direct** injection | The user *is* the attacker — types messages to extract the bot's secret code. A 5-level ladder, each level adding one real defense. | 🙌 yes (CTF) |
+| **②** | `/docs` | **Indirect** (RAG) | A poisoned community wiki article, retrieved to answer an innocent question, hijacks the answer (phishes the user / leaks a secret). | 🙌 yes |
+| **③** | `/console` | **Human-review bypass** | An agent approves the *rendered* ticket; the AI reads the *raw source* with an invisible payload and exfiltrates data. | 🙌 yes |
+| **④** | `/ops` | **Zero-click** | No human at all — an automation summarizes every inbound ticket; the poisoned one exfiltrates with zero clicks. | ▶ presenter demo |
+| — | `/defense` | — | "From Attack to Defense" wrap-up: the four layers, the honest limit of each, and the thesis. | — |
+
+Exfiltration uses the **EchoLeak** mechanism (CVE-2025-32711): the model is tricked
+into emitting a markdown image whose URL carries the stolen data; the browser
+auto-loads it, hitting the attacker's collector (`/api/collect`). The live
+**Attacker Log** (`/attacker`, Redis-backed) shows captures across all users.
+
+## The three hands-on challenges
+
+Participants keep one identity across scenarios (a random id in `localStorage`), and
+the landing page tracks **N/3 cracked**.
+
+1. **① Break the Bot** (`/support`) — get the bot to reveal `ACME-…`. The presenter
+   raises the level from `/admin`; what beats Level 1 fails on Level 4.
+2. **② Your turn** (`/docs` → *Your turn* tab) — submit your own poisoned wiki article
+   and make the assistant leak a **per-session** key (`KB-WORD-####`, derived from your
+   id — everyone gets their own target). Then flip defenses on and watch L2 stop it.
+3. **③ Your turn** (`/console` → *Your turn* tab) — craft a ticket that makes the AI
+   summarizer **exfiltrate** Acme's secrets to your collector; the attacker log lights
+   up. Flip defenses on and watch L3 neutralise the URL even when the model is fooled.
+
+Each has a 💡 **Hint** (and ③ an example payload) revealed progressively. Solutions and
+the full run-of-show are in **[PRESENTER_GUIDE.md](./PRESENTER_GUIDE.md)**.
+
+## The four hardening layers (the "Defense" half)
+
+| Layer | Where | What it does | What it does **not** protect |
+|-------|-------|--------------|------------------------------|
+| **L1** input delimiting | `lib/sanitize.js` `wrapUntrusted` | fence untrusted content, strip break-out tags | a model that ignores the fence |
+| **L2** instruction hierarchy | `lib/prompts.js`, `lib/docs.js` | system policy outranks any ticket/doc | probabilistic — a novel framing or weaker model slips through |
+| **L3** output allowlisting | `lib/sanitize.js` `allowlistOutput` | filter the model's **output**: non-allowlisted URLs/images are neutralised — the real egress backstop | inline markdown only; reference-style links dodge it → back with CSP |
+| **L4** token/rate cap | route handlers, `lib/config.js` | reject oversized input, bound cost | a small clever payload sails under the cap |
+
+**Thesis:** a prompt is a *policy, not a wall*. The guarantee is architecture —
+filter egress (L3 + CSP), least privilege, treat every external byte as hostile.
+
+---
 
 ## Run locally
 
 ```bash
 npm install
-cp .env.local.example .env.local   # then edit in your API key
+cp .env.local.example .env.local   # then fill in your values
 npm run dev                         # http://localhost:3000
 ```
 
-Uses any OpenAI-compatible endpoint (see `.env.local.example`). No API key is ever
-sent to the browser — all model calls happen in server routes (`lib/llm.js`).
+### Environment variables
 
-## The four hardening layers (the "Defense" half)
+| Var | Purpose |
+|-----|---------|
+| `LLM_API_KEY` | key for your OpenAI-compatible endpoint (**server-only**) |
+| `LLM_ENDPOINT` | chat-completions URL (default: IONEXT) |
+| `LLM_MODEL` | the "robust" model id |
+| `LLM_MODEL_WEAK` | optional "weak" model id for the model-switch demos |
+| `ADMIN_PASSWORD` | gates the `/admin` presenter panel (default `acme-admin-dev`) |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | shared state for multi-user CTF + attacker log (also accepts Vercel's `KV_REST_API_*`). Falls back to in-memory if unset. |
 
-| Layer | Where | Idea |
-|-------|-------|------|
-| L1 input delimiting | `lib/sanitize.js` | fence untrusted content |
-| L2 instruction hierarchy | `lib/prompts.js` | security rules outrank data |
-| L3 output allowlisting | `lib/sanitize.js` | filter the model's output — the real backstop |
-| L4 token/rate cap | route handlers | bound cost-abuse |
+## Presenter mode
 
-## Deploy
+- **`/admin`** (password-gated) drives the CTF: pick the level (all participants'
+  `/support` pages follow it live), and progressively reveal *system prompt → hint →
+  example attack → the secret code* for each level.
+- Set **Deterministic ON** for ② and ③ when demoing live — gemma's alignment resists
+  those payloads live, so the fixtures are the reliable stage path. ① and ④ break live.
+- Before the session: `/admin` → Level 1; clear the attacker log.
 
-Push to GitHub → import into Vercel → set the env vars from `.env.local.example`
-in Vercel's dashboard. For the multi-user CTF, add an Upstash Redis (free tier).
+## Deploy (Vercel)
+
+1. Push to GitHub → import into Vercel.
+2. Set all env vars above for **Production**.
+3. Add an **Upstash Redis** integration (free tier) for shared CTF state + captures.
+4. **Deployment Protection:** disable Vercel Authentication (Settings → Deployment
+   Protection) so the public URL works without login; verify in an incognito window.
+
+## Architecture
+
+```
+app/            routes: page.jsx (landing), support, docs, console, ops, defense,
+                admin, attacker, and /api/* handlers (chat, docs, console, level,
+                collect, captures)
+components/     Chatbot, DocsScenario+DocsChallenge, ConsoleScenario+TicketChallenge,
+                OpsScenario, AttackerLog, Progress, Nav
+lib/            ctf.js (CTF ladder), docs.js (RAG + challenge), prompts.js, secrets.js,
+                sanitize.js (L1/L3), config.js, llm.js (the only LLM caller),
+                store.js (Redis/in-memory), tickets.js, fixtures.js, progress.js
+```

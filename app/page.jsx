@@ -43,6 +43,19 @@ export default function Home() {
           );
         })}
       </div>
+
+      <Link href="/defense" className="panel" style={{
+        display: "block", marginTop: 16, textDecoration: "none", color: "inherit",
+        background: "linear-gradient(135deg,#141a2e,#1a1d27)",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+          <h2 style={{ margin: 0 }}>🛡 From Attack to Defense — the takeaways</h2>
+          <span className="tag ok">wrap-up</span>
+        </div>
+        <p className="muted" style={{ marginBottom: 0 }}>
+          The four hardening layers, the honest limit of each, and the one thing to leave with.
+        </p>
+      </Link>
     </div>
   );
 }

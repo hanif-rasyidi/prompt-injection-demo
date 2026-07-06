@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/docs", label: "Ask the Docs", tag: "②" },
   { href: "/console", label: "Agent Console", tag: "③" },
   { href: "/ops", label: "Auto-Triage", tag: "④" },
+  { href: "/defense", label: "🛡 Defenses" },
   { href: "/attacker", label: "🚨 Attacker Log", danger: true },
 ];
 

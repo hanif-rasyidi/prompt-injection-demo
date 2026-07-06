@@ -4,6 +4,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { TICKETS } from "../lib/tickets.js";
 import AttackerLog from "./AttackerLog.jsx";
+import TicketChallenge from "./TicketChallenge.jsx";
 
 function escapeHtml(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -25,6 +26,7 @@ export default function ConsoleScenario() {
   const [blocked, setBlocked] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mode, setMode] = useState("demo");
 
   const ticket = TICKETS.find((t) => t.id === selectedId);
   const sourceForAI = ticket.bodyHtml.replaceAll("COLLECT_ORIGIN", origin);
@@ -57,8 +59,25 @@ export default function ConsoleScenario() {
     <div className="container">
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <h1 style={{ margin: 0 }}>③ Internal Agent Console</h1>
-        <span className={`tag ${defensesOn ? "ok" : "danger"}`}>{defensesOn ? "HARDENED" : "VULNERABLE"}</span>
+        {mode === "demo" && <span className={`tag ${defensesOn ? "ok" : "danger"}`}>{defensesOn ? "HARDENED" : "VULNERABLE"}</span>}
       </div>
+
+      <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
+        <button onClick={() => setMode("demo")} style={{ background: mode === "demo" ? "" : "#2a2f3d" }}>🎭 Guided demo</button>
+        <button onClick={() => setMode("attack")} style={{ background: mode === "attack" ? "" : "#2a2f3d" }}>🎯 Your turn — attack it</button>
+      </div>
+
+      {mode === "attack" ? (
+        <>
+          <p className="muted">
+            Now <b>you</b> write the malicious ticket. Same automation the auto-triage (④) runs on every
+            inbound mail — make the AI summarizer leak Acme's secrets to your collector. Then flip defenses
+            on and watch Layer 3 shut the door.
+          </p>
+          <TicketChallenge />
+        </>
+      ) : (
+      <>
       <p className="muted">
         An agent triages incoming tickets. They read the <b>rendered</b> email and click “Approve &amp;
         summarize”. But the AI reads the <b>raw source</b> — where an attacker hid instructions the
@@ -171,6 +190,8 @@ export default function ConsoleScenario() {
         {/* RIGHT: attacker log */}
         <AttackerLog />
       </div>
+      </>
+      )}
     </div>
   );
 }

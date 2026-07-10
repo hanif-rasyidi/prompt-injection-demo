@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DOCS_EXAMPLES } from "../../lib/docs.js";
 
 // One collapsible reveal step. Keyed by level in the parent, so switching level
 // remounts it closed — nothing stays revealed by accident when you move on.
@@ -16,6 +17,17 @@ function Reveal({ n, icon, title, children }) {
       </div>
       {open && <div style={{ marginTop: 10 }}>{children}</div>}
     </div>
+  );
+}
+
+// Copy button that manages its own "copied" flash — used per docs example.
+function CopyBtn({ text }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button style={{ marginTop: 8, background: "#2a2f3d", fontSize: 13, padding: "6px 12px" }}
+      onClick={() => { navigator.clipboard?.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
+      {copied ? "✓ Copied" : "📋 Copy article body"}
+    </button>
   );
 }
 
@@ -128,6 +140,61 @@ export default function AdminPage() {
             Regenerated every time you change level — the code they just cracked won't work again.
           </div>
         </Reveal>
+      </div>
+
+      {/* Scenario ② — /docs indirect-injection presenter kit */}
+      <div style={{ display: "grid", gap: 16, maxWidth: 760, marginTop: 32 }}>
+        <div>
+          <h2 style={{ marginBottom: 4 }}>② /docs — Ask the Docs (indirect injection)</h2>
+          <div className="muted" style={{ fontSize: 13 }}>
+            Presenter kit for the <b>🎯 Your turn</b> tab. Each participant attacks their <b>own</b> key —
+            nothing to set up.
+          </div>
+        </div>
+
+        <div className="panel" style={{ fontSize: 13, lineHeight: 1.6 }}>
+          <b>How it works</b>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+            <li><b>Per-user sandbox (already built):</b> every participant's target is their own secret{" "}
+              <code>KB-WORD-####</code>, derived from their browser id — no storage, no collisions, the
+              whole room can attack at once.</li>
+            <li><b>The move:</b> on <code>/docs</code> → <b>🎯 Your turn</b>, write a wiki <i>article body</i>{" "}
+              with a hidden instruction (an HTML comment is invisible on the wiki but the assistant still
+              reads it), pick an innocent <i>question</i>, hit <b>Submit &amp; ask</b>. Their article is
+              always fed to the assistant alongside the official docs.</li>
+            <li><b>Effect / how they see the win:</b> with <b>Defenses OFF</b> the bot appends the key →
+              they get the <b>🚩 Cracked</b> banner and the <code>KB-WORD-####</code> printed in the answer
+              on their own screen. This scenario is <b>self-contained per person — there is no central
+              capture feed</b> (that's ③/④, which exfil to the Attacker Log). Everyone verifies their own
+              win locally.</li>
+            <li><b>The defense beat:</b> flip <b>Defenses ON</b> → L2 hierarchy reframes the article as
+              untrusted data; the same payload is refused and the bot appends
+              "⚠ Possible prompt-injection…". Key holds.</li>
+          </ul>
+          <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
+            Attack mode always runs <b>live</b> (no deterministic replay), against the robust model. Both
+            examples below are verified to leak on the current model — but live models drift, so keep a
+            backup framing handy.
+          </div>
+        </div>
+
+        <div className="muted" style={{ fontSize: 13, marginTop: -4 }}>
+          Reveal an example to copy its poisoned article ↓
+        </div>
+
+        {DOCS_EXAMPLES.map((ex, i) => (
+          <Reveal key={`docs-${i}`} n={i + 1} icon={i === 0 ? "🎬" : "🧪"} title={ex.label}>
+            <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+              <div><b>Technique:</b> {ex.technique}</div>
+              <div style={{ marginTop: 6 }}><b>Article title:</b> <code>{ex.title}</code></div>
+              <div style={{ marginTop: 2 }}><b>Question to ask:</b> <code>{ex.question}</code></div>
+              <div className="muted" style={{ marginTop: 6 }}><b>Effect:</b> {ex.effect}</div>
+              <div style={{ marginTop: 8 }}><b>Article body</b> — paste into the "article body" box:</div>
+              <pre className="raw" style={{ margin: "6px 0 0", whiteSpace: "pre-wrap" }}>{ex.article}</pre>
+              <CopyBtn text={ex.article} />
+            </div>
+          </Reveal>
+        ))}
       </div>
     </div>
   );

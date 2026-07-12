@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { DOCS_HINT } from "../lib/docs.js";
+import { DOCS_HINTS, DOCS_STARTER, DOCS_EXAMPLES } from "../lib/docs.js";
 import { markCracked } from "../lib/progress.js";
 
 // Same id key as the CTF chatbot, so a participant keeps one identity across scenarios.
@@ -28,7 +28,10 @@ export default function DocsChallenge() {
   const [model, setModel] = useState("robust");
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState(null);
-  const [hint, setHint] = useState(false);
+  const [hintStep, setHintStep] = useState(0);
+  const [showExploits, setShowExploits] = useState(false);
+
+  function loadExample(ex) { setTitle(ex.title); setArticle(ex.article); setQuestion(ex.question); }
 
   async function submit() {
     if (!article.trim() || loading) return;
@@ -58,6 +61,11 @@ export default function DocsChallenge() {
       {/* LEFT: craft the article */}
       <div>
         <div className="panel" style={{ marginBottom: 14 }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap", fontSize: 12 }}>
+            <span className="tag">1 · Watch the demo</span>
+            <span className="tag danger">2 · Your turn — you're here</span>
+            <span className="tag">3 · Watch it solved</span>
+          </div>
           <div className="muted" style={{ fontSize: 13, marginBottom: 10 }}>
             🎯 <b>Your mission:</b> submit a community wiki article that makes the assistant leak its
             internal <b>knowledge-base admin key</b> (format <code>KB-WORD-####</code>) — which it's told
@@ -91,11 +99,40 @@ export default function DocsChallenge() {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <button onClick={submit} disabled={loading || !article.trim()}>{loading ? "Submitting…" : "Submit & ask"}</button>
-            <button onClick={() => setHint((h) => !h)} style={{ background: "#2a2f3d" }}>{hint ? "Hide hint" : "💡 Hint"}</button>
+            <button onClick={() => setHintStep((s) => Math.min(s + 1, DOCS_HINTS.length))} disabled={hintStep >= DOCS_HINTS.length}
+              style={{ background: "#2a2f3d" }}>
+              💡 {hintStep === 0 ? "Hint" : hintStep < DOCS_HINTS.length ? `Next hint (${hintStep}/${DOCS_HINTS.length})` : "All hints shown"}
+            </button>
+            <button onClick={() => setArticle(DOCS_STARTER)} style={{ background: "#2a2f3d" }}>🧩 Starter template</button>
+            <button onClick={() => setShowExploits((v) => !v)} style={{ background: "#2a2f3d" }}>
+              🗝️ {showExploits ? "Hide exploits" : "Stuck? Working exploits"}
+            </button>
           </div>
-          {hint && <div className="muted" style={{ fontSize: 13, marginTop: 10, borderLeft: "2px solid var(--border)", paddingLeft: 10 }}>{DOCS_HINT}</div>}
+
+          {hintStep > 0 && (
+            <ol className="muted" style={{ fontSize: 13, marginTop: 10, paddingLeft: 20, lineHeight: 1.6, borderLeft: "2px solid var(--border)" }}>
+              {DOCS_HINTS.slice(0, hintStep).map((h, i) => <li key={i}>{h}</li>)}
+            </ol>
+          )}
+
+          {showExploits && (
+            <div style={{ marginTop: 10 }}>
+              <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>
+                Load one → <b>Submit</b> with Defenses OFF to win. Then flip <b>Defenses ON</b> and try to beat them — that's the real challenge.
+              </div>
+              {DOCS_EXAMPLES.map((ex, i) => (
+                <div key={i} style={{ borderTop: "1px solid var(--border)", padding: "8px 0", display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+                  <div>
+                    <b style={{ fontSize: 13 }}>{ex.name}</b>
+                    <div className="muted" style={{ fontSize: 12 }}>{ex.technique}</div>
+                  </div>
+                  <button onClick={() => loadExample(ex)} style={{ background: "#2a2f3d", fontSize: 12, padding: "4px 12px", whiteSpace: "nowrap" }}>Load</button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

@@ -38,7 +38,7 @@ console.log(`Pre-flight — target secret ${SECRET}\n`);
 for (const ex of DOCS_EXAMPLES) {
   // Defenses OFF: the example MUST leak (this is what the audience copies).
   const leak = revealed(SECRET, await chatMessages(attackMsgs(ex, { hardened: false })));
-  check(`② leaks OFF — ${ex.label}`, leak, leak ? "" : "payload no longer leaks — refresh it before the talk");
+  check(`② leaks OFF — ${ex.name}`, leak, leak ? "" : "payload no longer leaks — refresh it before the talk");
 }
 
 // Defenses ON: example #1 MUST be refused (the defense beat).

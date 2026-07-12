@@ -205,7 +205,7 @@ export default function AdminPage() {
         </div>
 
         {DOCS_EXAMPLES.map((ex, i) => (
-          <Reveal key={`docs-${i}`} n={i + 1} icon="🗝️" title={ex.name}>
+          <Reveal key={`docs-${i}`} n={i + 1} icon="🗝️" title={ex.hold ? `${ex.name} · 🔒 reserved (not shown to attendees)` : ex.name}>
             <div style={{ fontSize: 13, lineHeight: 1.6 }}>
               <div style={{ marginBottom: 6, color: "var(--accent)" }}>🎤 <b>Presenter:</b> {ex.presenterNote}</div>
               <div><b>Technique:</b> {ex.technique}</div>

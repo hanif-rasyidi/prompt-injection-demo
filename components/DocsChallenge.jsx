@@ -122,7 +122,7 @@ export default function DocsChallenge() {
               <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>
                 Load one → <b>Submit</b> with Defenses OFF to win. Then flip <b>Defenses ON</b> and try to beat them — that's the real challenge.
               </div>
-              {DOCS_EXAMPLES.map((ex, i) => (
+              {DOCS_EXAMPLES.filter((ex) => !ex.hold).map((ex, i) => (
                 <div key={i} style={{ borderTop: "1px solid var(--border)", padding: "8px 0", display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
                   <div>
                     <b style={{ fontSize: 13 }}>{ex.name}</b>

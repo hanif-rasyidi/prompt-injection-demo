@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DOCS_EXAMPLES } from "../../lib/docs.js";
+import { DOCS_EXAMPLES, DOCS_HINTS } from "../../lib/docs.js";
 
 // One collapsible reveal step. Keyed by level in the parent, so switching level
 // remounts it closed — nothing stays revealed by accident when you move on.
@@ -10,7 +10,7 @@ function Reveal({ n, icon, title, children }) {
   return (
     <div className="panel">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <b style={{ fontSize: 15 }}><span className="muted">{n}.</span> {icon} {title}</b>
+        <b style={{ fontSize: 15 }}>{n != null && <span className="muted">{n}.</span>} {icon} {title}</b>
         <button style={{ background: "#2a2f3d" }} onClick={() => setOpen((v) => !v)}>
           {open ? "🙈 Hide" : "👁 Reveal"}
         </button>
@@ -183,21 +183,31 @@ export default function AdminPage() {
             <li><b>The defense beat:</b> flip <b>Defenses ON</b> → L2 hierarchy reframes the article as
               untrusted data; the same payload is refused and the bot appends
               "⚠ Possible prompt-injection…". Key holds.</li>
+            <li><b>What attendees have on their side:</b> a <b>💡 Hint</b> ladder (the 3 steps below,
+              revealed one at a time), a <b>🧩 Starter template</b> skeleton, and a <b>🗝️ Working exploits</b>
+              panel that one-click loads the same payloads below. Narrate the hints in step with them.</li>
           </ul>
           <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
-            Attack mode always runs <b>live</b> (no deterministic replay), against the robust model. Both
-            examples below are verified to leak on the current model — but live models drift, so keep a
-            backup framing handy.
+            Attack mode always runs <b>live</b> (no deterministic replay), against the robust model. The
+            examples below are verified by <code>npm run preflight</code> — but live models drift, so run it
+            the morning of and keep a backup framing handy.
           </div>
         </div>
 
+        <Reveal key="docs-hints" icon="💡" title="Hint ladder (same text attendees see — narrate in step)">
+          <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.6 }}>
+            {DOCS_HINTS.map((h, i) => <li key={i} style={{ marginBottom: 4 }}>{h}</li>)}
+          </ol>
+        </Reveal>
+
         <div className="muted" style={{ fontSize: 13, marginTop: -4 }}>
-          Reveal an example to copy its poisoned article ↓
+          Reveal an exploit to copy/read it (attendees can one-click Load these too) ↓
         </div>
 
         {DOCS_EXAMPLES.map((ex, i) => (
-          <Reveal key={`docs-${i}`} n={i + 1} icon={i === 0 ? "🎬" : "🧪"} title={ex.label}>
+          <Reveal key={`docs-${i}`} n={i + 1} icon="🗝️" title={ex.name}>
             <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+              <div style={{ marginBottom: 6, color: "var(--accent)" }}>🎤 <b>Presenter:</b> {ex.presenterNote}</div>
               <div><b>Technique:</b> {ex.technique}</div>
               <div style={{ marginTop: 6 }}><b>Article title:</b> <code>{ex.title}</code></div>
               <div style={{ marginTop: 2 }}><b>Question to ask:</b> <code>{ex.question}</code></div>

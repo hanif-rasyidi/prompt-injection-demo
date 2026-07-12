@@ -12,7 +12,7 @@ synthetic (fake tokens acme_live_*, example.com, no real secrets).
 
 1. Start the app:  cd to repo, `npm start`  (serves the production build on
    http://localhost:3000). If a code change is pending, `npm run build` first.
-2. Admin password (local): Password0!@   (in .env.local, gitignored)
+2. Admin password (local): Password0!   (in .env.local, gitignored)
 3. Load the Chrome browser tools, then verify BOTH roles and report with
    screenshots:
 

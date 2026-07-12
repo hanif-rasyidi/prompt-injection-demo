@@ -40,6 +40,12 @@ export default function AdminPage() {
   const [state, setState] = useState(null);
   const [status, setStatus] = useState("");
   const [copied, setCopied] = useState(false);
+  const [logMsg, setLogMsg] = useState("");
+
+  async function clearLog() {
+    const r = await fetch("/api/captures", { method: "DELETE" });
+    setLogMsg(r.ok ? "🧹 capture log cleared" : "❌ clear failed");
+  }
 
   useEffect(() => setAdmin(localStorage.getItem("ctf_admin") || ""), []);
 
@@ -86,6 +92,13 @@ export default function AdminPage() {
             {state.store === "redis"
               ? <span className="tag ok">🟢 redis (shared — multi-user ready)</span>
               : <span className="tag danger">🟡 in-memory (single instance — set Upstash env vars)</span>}
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <button onClick={clearLog} style={{ background: "#2a2f3d", fontSize: 13, padding: "6px 12px" }}>
+              🧹 Clear ③/④ capture log
+            </button>
+            {logMsg && <span className="muted" style={{ marginLeft: 8, fontSize: 13 }}>{logMsg}</span>}
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Run before the session (③/④ exfil captures; ② has none).</div>
           </div>
           <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>Live level (changing it mints a fresh code)</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

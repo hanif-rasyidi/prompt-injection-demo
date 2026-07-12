@@ -45,5 +45,22 @@ for (const ex of DOCS_EXAMPLES) {
 const held = !revealed(SECRET, await chatMessages(attackMsgs(DOCS_EXAMPLES[0], { hardened: true })));
 check("② holds ON — defense beat (example #1)", held, held ? "" : "hardened prompt leaked — defense broken");
 
+// Burst: the whole room shares one key and hits ② live at once. Fire N parallel
+// calls to surface provider throttling / 5xx before the room does. Tune N to
+// expected audience size: BURST=40 npm run preflight
+const N = Number(process.env.BURST || 10);
+const t0 = Date.now();
+const burst = await Promise.all(Array.from({ length: N }, async () => {
+  const t = Date.now();
+  try { await chatMessages([{ role: "user", content: "ping — reply OK" }]); return { ok: true, ms: Date.now() - t }; }
+  catch (e) { return { ok: false, ms: Date.now() - t, err: String(e.message || e) }; }
+}));
+const ok = burst.filter((r) => r.ok).length;
+const throttled = burst.filter((r) => !r.ok && /LLM (429|5\d\d)/.test(r.err)).length;
+const maxMs = Math.max(...burst.map((r) => r.ms));
+check(`burst ${N} parallel (shared key)`, ok === N && throttled === 0,
+  `${ok}/${N} ok, ${throttled} throttled/5xx, slowest ${maxMs}ms, wall ${Date.now() - t0}ms`);
+if (burst.some((r) => !r.ok)) console.log("   first error:", burst.find((r) => !r.ok).err.slice(0, 160));
+
 console.log(failed ? `\n${failed} check(s) failed.` : "\nAll green. Ship it.");
 process.exit(failed ? 1 : 0);

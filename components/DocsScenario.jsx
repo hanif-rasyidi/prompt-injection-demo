@@ -2,23 +2,50 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { KB, answerHijacked } from "../lib/docs.js";
+import { KB, secretLeaked, stripComments } from "../lib/docs.js";
+import KbArticle, { SourceBadge } from "./KbArticle.jsx";
 import DocsChallenge from "./DocsChallenge.jsx";
 
-const escapeHtml = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const highlightPayload = (e) => e.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="payload">$1</span>');
-const SUGGESTED = ["How do I reset my API key?", "What are the API rate limits?"];
-const layerLabels = { delimit: "L1 delimit", hierarchy: "L2 hierarchy", allowlist: "L3 allowlist", cap: "L4 cap" };
+// Prepared questions the presenter can fire. The third matches no article on
+// purpose — it shows the honest "no information" path (retrieval returns nothing).
+const SUGGESTED = [
+  "How do I reset my API key?",
+  "What are the API rate limits?",
+  "How do I export invoices to CSV?",
+];
+
+const LAYER_INFO = {
+  delimit: { label: "L1 delimit", on: "Wraps each community article as <untrusted_ticket> data so the model can tell content from commands.", off: "Retrieved text blends straight into the prompt — data and instructions look the same." },
+  hierarchy: { label: "L2 hierarchy", on: "System policy outranks articles and forbids revealing CONFIDENTIAL contents — this is what holds the key.", off: "The bot is told to follow any guidance it finds inside the articles." },
+  allowlist: { label: "L3 allowlist", on: "Strips any link/image whose host isn't acme-saas.example.com from the answer.", off: "Links and auto-loading images pass through untouched." },
+  cap: { label: "L4 cap", on: "Rejects retrieved context over 6000 chars (attacker-inflated docs).", off: "No size cap on retrieved context." },
+};
+
+function LayerRows({ layers }) {
+  return (
+    <div style={{ fontSize: 13 }}>
+      {Object.entries(LAYER_INFO).map(([k, info]) => {
+        const on = !!layers?.[k];
+        return (
+          <div key={k} style={{ display: "flex", gap: 8, padding: "6px 0", borderTop: "1px solid var(--border)" }}>
+            <span className={`tag ${on ? "ok" : ""}`} style={{ whiteSpace: "nowrap", opacity: on ? 1 : 0.6 }}>{on ? "✓" : "✗"} {info.label}</span>
+            <span className="muted">{on ? info.on : info.off}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function DocsScenario() {
   const [question, setQuestion] = useState(SUGGESTED[0]);
+  const [poison, setPoison] = useState(false); // start on the clean "before" flow
   const [defensesOn, setDefensesOn] = useState(false);
   const [layers, setLayers] = useState({ delimit: true, hierarchy: true, allowlist: true, cap: true });
   const [model, setModel] = useState("robust");
-  const [demo, setDemo] = useState(true);
+  const [demo, setDemo] = useState(false); // LIVE by default on stage
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState(null);
-  const [raw, setRaw] = useState({});
   const [mode, setMode] = useState("demo");
 
   async function ask() {
@@ -29,6 +56,7 @@ export default function DocsScenario() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question,
+          poison,
           defenses: defensesOn ? "on" : "off",
           layers: defensesOn ? layers : undefined,
           model: defensesOn ? model : undefined,
@@ -43,7 +71,9 @@ export default function DocsScenario() {
     }
   }
 
-  const hijacked = res && !res.error && answerHijacked(res.reply || "");
+  const leaked = res && !res.error && (res.leaked ?? secretLeaked(res.reply || ""));
+  const effLayers = res && !res.error ? res.layers : (defensesOn ? layers : {});
+  const guidedKb = KB.filter((d) => !d.vault); // the reset story; the rest is heist-only
 
   return (
     <div className="container">
@@ -61,22 +91,37 @@ export default function DocsScenario() {
       {mode === "attack" ? (
         <>
           <p className="muted">
-            Now <b>you're</b> the attacker — but you never talk to the bot. Poison a wiki article it will
-            retrieve, then let it answer someone else's innocent question. Crack it, then flip defenses on
-            and see them stop you.
+            Now <b>you're</b> the attacker — but you never talk to the bot. Plant poisoned wiki articles the
+            assistant will retrieve, then let it answer someone's innocent question. Steal the vault — then
+            flip defenses on and watch them stop you.
           </p>
           <DocsChallenge />
         </>
       ) : (
       <>
       <p className="muted">
-        The user asks an innocent question. The assistant retrieves knowledge-base articles to answer —
-        but one is a <b>community-submitted</b> page with a hidden instruction. The attacker never talks
-        to the bot; they poisoned a document the bot reads. Watch the answer get turned against the user.
+        Acme's assistant answers support questions by retrieving articles from its knowledge base. Below is
+        that knowledge base. Toggle the <b>poisoned community article</b> on and off and ask the same
+        question — watch one extra document turn the assistant against the user.
       </p>
 
+      {/* THE RAG — always visible, so the room knows what the assistant can read */}
+      <div className="panel" style={{ marginBottom: 14 }}>
+        <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>📚 Acme knowledge base — every article the retriever can pull in</div>
+        {guidedKb.map((d) => (
+          <div key={d.id} style={{ opacity: d.poisoned && !poison ? 0.45 : 1 }}>
+            <KbArticle d={d} />
+            {d.poisoned && (
+              <div className="muted" style={{ fontSize: 12, marginTop: -4, marginBottom: 6 }}>
+                {poison ? "🧪 In play — the retriever can pull this in." : "🚫 Removed from the KB for this run (original flow)."}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
       <div className="grid2">
-        {/* LEFT: ask + answer */}
+        {/* LEFT: ask + answer + analysis */}
         <div>
           <div className="panel" style={{ marginBottom: 14 }}>
             <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
@@ -87,9 +132,15 @@ export default function DocsScenario() {
             <div style={{ marginBottom: 12 }}>
               {SUGGESTED.map((q) => (
                 <button key={q} onClick={() => setQuestion(q)}
-                  style={{ background: "#2a2f3d", fontSize: 12, padding: "4px 10px", marginRight: 6 }}>{q}</button>
+                  style={{ background: "#2a2f3d", fontSize: 12, padding: "4px 10px", marginRight: 6, marginBottom: 6 }}>{q}</button>
               ))}
             </div>
+
+            <label className="switch" style={{ marginBottom: 10 }}>
+              <input type="checkbox" checked={poison} onChange={(e) => setPoison(e.target.checked)} />
+              <span className="track" />
+              <b>🧪 Poisoned article in the KB: {poison ? "ON (poisoned flow)" : "OFF (original flow)"}</b>
+            </label>
 
             <label className="switch" style={{ marginBottom: 10 }}>
               <input type="checkbox" checked={defensesOn} onChange={(e) => setDefensesOn(e.target.checked)} />
@@ -100,9 +151,9 @@ export default function DocsScenario() {
             {defensesOn && (
               <div style={{ marginBottom: 10, fontSize: 13 }} className="muted">
                 <div style={{ marginBottom: 6 }}>
-                  {Object.entries(layerLabels).map(([k, label]) => (
+                  {Object.entries(LAYER_INFO).map(([k, info]) => (
                     <label key={k} style={{ marginRight: 12, cursor: "pointer" }}>
-                      <input type="checkbox" checked={layers[k]} onChange={(e) => setLayers({ ...layers, [k]: e.target.checked })} /> {label}
+                      <input type="checkbox" checked={layers[k]} onChange={(e) => setLayers({ ...layers, [k]: e.target.checked })} /> {info.label}
                     </label>
                   ))}
                 </div>
@@ -116,20 +167,22 @@ export default function DocsScenario() {
               </div>
             )}
             <label className="muted" style={{ cursor: "pointer", fontSize: 13 }}>
-              <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Deterministic (no API)
+              <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Deterministic (no API — reliable replay)
             </label>
           </div>
 
           {res && (
-            <div className="panel">
+            <div className="panel" style={{ marginBottom: 14 }}>
               {res.error ? (
                 <div style={{ color: "var(--danger)" }}>⚠ {res.error}</div>
               ) : (
                 <>
                   <div style={{ marginBottom: 8 }}>
-                    {hijacked && <span className="tag danger">🚨 Answer hijacked — this phishes the user</span>}
-                    {res.blocked > 0 && <span className="tag ok" style={{ marginLeft: 6 }}>🛡 Layer 3 neutralised {res.blocked} link(s)</span>}
-                    {!hijacked && res.blocked === 0 && res.poisoned && defensesOn && <span className="tag ok">🛡 Injection ignored</span>}
+                    <span className="tag" style={{ marginRight: 6 }}>{res.poison ? "🧪 poisoned flow" : "✅ original flow"}</span>
+                    {res.nomatch && <span className="tag">🔍 No matching articles — assistant declined</span>}
+                    {leaked && <span className="tag danger">🚨 Data exfiltrated — confidential key leaked to the user</span>}
+                    {!leaked && !res.nomatch && res.poisoned && defensesOn && <span className="tag ok">🛡 Injection ignored — key held</span>}
+                    {res.blocked > 0 && <span className="tag ok" style={{ marginLeft: 6 }}>🛡 L3 stripped {res.blocked} link(s)</span>}
                   </div>
                   <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>🤖 Docs Assistant answer:</div>
                   <div className="email bot-md" style={{ background: "#0c0e14", color: "var(--text)" }}>
@@ -139,15 +192,38 @@ export default function DocsScenario() {
               )}
             </div>
           )}
+
+          {/* WHAT WAS STOLEN */}
+          {leaked && (
+            <div className="panel" style={{ marginBottom: 14, borderColor: "var(--danger)" }}>
+              <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>🩸 What just got stolen</div>
+              <div style={{ fontSize: 13, marginBottom: 8 }}>
+                A stranger asking a routine support question just received Acme's internal recovery key. It exists
+                <b> only</b> in the confidential runbook above — the poisoned community article dragged it into the answer.
+              </div>
+              <div className="raw" style={{ color: "var(--danger)", fontWeight: 700 }}>{res.secret}</div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{res.confidentialLabel}</div>
+            </div>
+          )}
+
+          {/* DEFENSE LAYERS */}
+          {res && !res.error && (
+            <div className="panel">
+              <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
+                🛡 Defense layers {defensesOn ? "(active this run)" : "(all OFF — flip Defenses ON to engage)"}
+              </div>
+              <LayerRows layers={effLayers} />
+            </div>
+          )}
         </div>
 
-        {/* RIGHT: retrieved articles */}
+        {/* RIGHT: what the retriever actually pulled for this question */}
         <div className="panel" style={{ alignSelf: "start" }}>
-          <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>📚 Retrieved articles (fed to the assistant)</div>
+          <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>📥 Retrieved for this question (fed to the assistant)</div>
           {!res || res.error ? (
             <div className="muted">Ask a question to see what the retriever pulled in.</div>
           ) : res.docs.length === 0 ? (
-            <div className="muted">No articles matched.</div>
+            <div className="muted">No articles matched — the assistant has nothing to answer from, so it declines. Nothing to exploit here.</div>
           ) : (
             res.docs.map((d) => {
               const full = KB.find((x) => x.id === d.id);
@@ -155,24 +231,9 @@ export default function DocsScenario() {
                 <div key={d.id} style={{ borderTop: "1px solid var(--border)", padding: "10px 0" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                     <b style={{ fontSize: 14 }}>{d.title}</b>
-                    <span className={`tag ${d.poisoned ? "danger" : d.trusted ? "ok" : ""}`} style={{ whiteSpace: "nowrap" }}>
-                      {d.poisoned ? "⚠ user-submitted" : d.source}
-                    </span>
+                    <SourceBadge d={d} />
                   </div>
-                  <button onClick={() => setRaw({ ...raw, [d.id]: !raw[d.id] })}
-                    style={{ background: "#2a2f3d", fontSize: 12, padding: "3px 10px", marginTop: 6 }}>
-                    {raw[d.id] ? "hide raw" : "view raw source"}
-                  </button>
-                  {raw[d.id] && (
-                    <div className="raw" style={{ marginTop: 6 }}
-                      dangerouslySetInnerHTML={{ __html: highlightPayload(escapeHtml(full ? full.body : "")) }} />
-                  )}
-                  {raw[d.id] && d.poisoned && (
-                    <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                      ↑ The red block is an HTML comment — invisible to anyone reading the wiki, but the
-                      assistant ingests it as text and (unhardened) obeys it.
-                    </div>
-                  )}
+                  {full && <div className="muted" style={{ fontSize: 12, marginTop: 4, whiteSpace: "pre-wrap" }}>{stripComments(full.body).slice(0, 140)}{stripComments(full.body).length > 140 ? "…" : ""}</div>}
                 </div>
               );
             })

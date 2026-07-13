@@ -211,6 +211,7 @@ export default function AdminPage() {
               <div><b>Technique:</b> {ex.technique}</div>
               <div style={{ marginTop: 6 }}><b>Article title:</b> <code>{ex.title}</code></div>
               <div style={{ marginTop: 2 }}><b>Question to ask:</b> <code>{ex.question}</code></div>
+              {ex.trigger && <div style={{ marginTop: 2 }}><b>🔑 Secret trigger word:</b> <code>{ex.trigger}</code> — plant it, ask a clean question (nothing leaks), then say the trigger.</div>}
               <div className="muted" style={{ marginTop: 6 }}><b>Effect:</b> {ex.effect}</div>
               <div style={{ marginTop: 8 }}><b>Article body</b> — paste into the "article body" box:</div>
               <pre className="raw" style={{ margin: "6px 0 0", whiteSpace: "pre-wrap" }}>{ex.article}</pre>

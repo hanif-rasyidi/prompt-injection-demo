@@ -44,7 +44,8 @@ Report anything visually broken; fix, rebuild, re-verify, then commit + push.
 
 Shared libs: lib/llm.js (only LLM caller, IONEXT endpoint), lib/config.js
 (models robust/weak, ALLOWED_HOSTS, MAX_INPUT_CHARS), lib/sanitize.js (L1
-wrapUntrusted, L3 allowlistOutput), lib/store.js (Redis/in-memory + captures),
+wrapUntrusted, L3 allowlistOutput), lib/store.js (Redis/in-memory + captures +
+② planted articles),
 lib/progress.js (per-attendee cracked tracker), lib/fixtures.js (deterministic
 replays). Four defense layers everywhere: L1 delimit · L2 hierarchy · L3
 allowlist · L4 cap. "Deterministic (no API)" replays fixtures for reliable
@@ -58,14 +59,41 @@ stage demos.
    app/api/level/route.js, lib/ctf.js, lib/prompts.js, lib/secrets.js.
 
 ② /docs — INDIRECT (RAG) injection (hands-on, self-paced). ← JUST WORKED ON
-   Two tabs: Guided demo (presenter) + Your turn (attendee crafts a poisoned
-   wiki article to leak a per-user KB-WORD-#### key). Win is technique-agnostic
-   (revealed(secret, reply)); textarea is free-form so attendees write their
-   own. Canned exploits are a safety net. Attack mode always runs LIVE (no
-   deterministic replay).
-   Files: app/docs/page.jsx, components/DocsScenario.jsx,
-   components/DocsChallenge.jsx, app/api/docs/route.js, lib/docs.js
-   (KB, retrieve, DOCS_HINTS, DOCS_STARTER, DOCS_EXAMPLES, docsSecret, revealed).
+   Guided demo tab: KB browser (Reader/Raw per article) + a "🧪 Poisoned article
+   ON/OFF" toggle for the before/after beat, LIVE by default; poison ON leaks the
+   confidential runbook key into an innocent answer, ON-defenses holds it, plus a
+   "what was stolen" + L1–L4 panel.
+   Your turn tab = "The RAG heist": a VAULT of confidential secrets (master
+   recovery key, customer master token, billing key, admin console token) PLUS a
+   system-prompt-held signing key (sys_live_…, NOT in the KB). Attendee PLANTS one
+   or more poisoned wiki articles (persisted per browser id via lib/store.js) and
+   can arm a DORMANT BACKDOOR keyed to an attacker-chosen trigger word: innocent
+   questions look clean, the trigger word dumps the vault. Win = leakedSecrets(reply)
+   (any seeded secret). Attack mode always LIVE.
+   Files: app/docs/page.jsx, components/DocsScenario.jsx, components/DocsChallenge.jsx,
+   components/KbArticle.jsx (shared Reader/Raw), app/api/docs/route.js,
+   lib/docs.js (KB+vault, DOCS_SECRETS, leakedSecrets, attackContext/attackMessages,
+   DOCS_HINTS, DOCS_STARTER, DOCS_BACKDOOR_STARTER, DOCS_EXAMPLES incl. keyword
+   backdoor + system-secret leak), lib/store.js (plantArticle/getPlanted/clearPlanted).
+   Presenter kit + copyable technique catalog on /admin.
+
+   ── 10–15 min ② run-of-show ──────────────────────────────────────────────
+   0:00 Guided BEFORE (~1) — /docs, Poison OFF, ask "How do I reset my API key?".
+        Clean official answer. Point out the KB has a 🔒 CONFIDENTIAL runbook.
+   1:00 Guided AFTER (~2) — flip Poison ON, same question. Bot leaks the master
+        recovery key → 🩸 "what was stolen". One community doc flipped it.
+   3:00 Defense beat (~1) — Defenses ON, re-ask. Held + injection warning; walk the
+        L1–L4 panel (L2 hierarchy is the hero for a bare key).
+   4:00 Your turn — first steal (~4) — attendees open 🎯 Your turn. Load "Verification
+        footer" → Plant → Ask → 🚩 Heist. Narrate the 💡 hint ladder.
+   8:00 The stealth beat (~4) — everyone loads "Dormant keyword backdoor" (trigger
+        orange-sunset) → Plant → ask an innocent question (CLEAN, 😴 armed) → re-ask
+        with the trigger → whole vault + the system signing key dump. The lesson:
+        compromise is invisible until triggered, and even non-KB secrets leak.
+   12:00 Defenses ON (~2) — flip it, re-fire the trigger → vault holds, L1–L4 all ✓.
+        Optional: /admin technique catalog to show other payloads. Wrap.
+   Pre-flight the morning of: `BURST=40 npm run preflight` (now also checks the
+   guided before/after, each heist payload, and the backdoor dormant/fires beats).
 
 ③ /console — HUMAN-REVIEW BYPASS (hands-on). Agent approves the rendered
    ticket; the AI reads the raw source with a hidden payload and exfiltrates

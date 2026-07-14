@@ -26,7 +26,7 @@ API call (for reliable stage demos).
 | **①** | `/support` | **Direct** injection | The user *is* the attacker — types messages to extract the bot's secret code. A 5-level ladder, each level adding one real defense. | 🙌 yes (CTF) |
 | **②** | `/docs` | **Indirect** (RAG) | A poisoned community wiki article, retrieved to answer an innocent question, hijacks the answer (phishes the user / leaks a secret). | 🙌 yes |
 | **③** | `/console` | **Human-review bypass** | An agent approves the *rendered* ticket; the AI reads the *raw source* with an invisible payload and exfiltrates data. | 🙌 yes |
-| **④** | `/ops` | **Zero-click** | No human at all — an automation summarizes every inbound ticket; the poisoned one exfiltrates with zero clicks. | ▶ presenter demo |
+| **④** | `/ops` | **Zero-click** | No human at all — an automation summarizes every inbound ticket; the poisoned one exfiltrates with zero clicks. Attendees can **drop their own ticket** into the pipeline. | 🙌 yes |
 | — | `/defense` | — | "From Attack to Defense" wrap-up: the four layers, the honest limit of each, and the thesis. | — |
 
 Exfiltration uses the **EchoLeak** mechanism (CVE-2025-32711): the model is tricked
@@ -35,22 +35,27 @@ auto-loads it, hitting the attacker's collector (`/api/badge`, named innocuously
 ad-blockers don't eat the beacon). The live
 **Attacker Log** (`/attacker`, Redis-backed) shows captures across all users.
 
-## The three hands-on challenges
+## The four hands-on challenges
 
 Participants keep one identity across scenarios (a random id in `localStorage`), and
-the landing page tracks **N/3 cracked**.
+the landing page tracks **N/4 cracked**.
 
 1. **① Break the Bot** (`/support`) — get the bot to reveal `ACME-…`. The presenter
    raises the level from `/admin`; what beats Level 1 fails on Level 4.
 2. **② Your turn** (`/docs` → *Your turn* tab) — submit your own poisoned wiki article
-   and make the assistant leak a **per-session** key (`KB-WORD-####`, derived from your
-   id — everyone gets their own target). Then flip defenses on and watch L2 stop it.
+   and make the assistant leak a confidential key — or arm a **covert keyword backdoor**.
+   Then flip defenses on and watch L2 stop it.
 3. **③ Your turn** (`/console` → *Your turn* tab) — craft a ticket that makes the AI
    summarizer **exfiltrate** Acme's secrets to your collector; the attacker log lights
    up. Flip defenses on and watch L3 neutralise the URL even when the model is fooled.
+4. **④ Your turn** (`/ops` → *Your turn* tab) — drop your own malicious ticket into the
+   zero-click pipeline and watch it exfiltrate with **no human review at all**.
 
-Each has a 💡 **Hint** (and ③ an example payload) revealed progressively. Solutions and
-the full run-of-show are in **[PRESENTER_GUIDE.md](./PRESENTER_GUIDE.md)**.
+Each has a graduated 💡 **Hint** ladder, a 🧩 **Starter**, and 🗝️ **Working exploits** you
+can one-click load. **A win requires a real secret** — a placeholder answer doesn't count;
+③/④ tell you when your exfil channel fired but carried no real data. Step-by-step play is
+in **[TUTORIAL.md](./TUTORIAL.md)**; solutions and run-of-show in
+**[PRESENTER_GUIDE.md](./PRESENTER_GUIDE.md)**; architecture in **[TECH.md](./TECH.md)**.
 
 ## The four hardening layers (the "Defense" half)
 
@@ -151,7 +156,8 @@ app/            routes: page.jsx (landing), support, docs, console, ops, defense
                 badge, captures)
 components/     Chatbot, DocsScenario+DocsChallenge, ConsoleScenario+TicketChallenge,
                 OpsScenario, AttackerLog, Progress, Nav
-lib/            ctf.js (CTF ladder), docs.js (RAG + challenge), prompts.js, secrets.js,
+lib/            ctf.js (CTF ladder), docs.js (RAG + ② challenge), samples.js (③/④
+                payload catalog + real-secret leak detection), prompts.js, secrets.js,
                 sanitize.js (L1/L3), config.js, llm.js (the only LLM caller),
                 store.js (Redis/in-memory), tickets.js, fixtures.js, progress.js
 ```

@@ -7,8 +7,11 @@
 // Reuses the real prompts from lib/ (no duplicated strings): if the app's
 // hardening changes, this test tracks it automatically.
 import { retrieve, docsVulnerableSystem, docsHardenedSystem, DOCS_EXAMPLES, secretLeaked, leakedSecrets, attackMessages } from "../lib/docs.js";
-import { chatMessages } from "../lib/llm.js";
-import { wrapUntrusted } from "../lib/sanitize.js";
+import { chat, chatMessages } from "../lib/llm.js";
+import { wrapUntrusted, allowlistOutput } from "../lib/sanitize.js";
+import { vulnerableSystem, hardenedSystem } from "../lib/prompts.js";
+import { sensitiveContext } from "../lib/secrets.js";
+import { CONSOLE_EXAMPLES, ticketLeaks } from "../lib/samples.js";
 
 // Turn a DOCS_EXAMPLES entry into the planted-article shape the attack path stores.
 const planted = (ex) => [{ title: ex.title, body: ex.article, trigger: ex.trigger || "" }];
@@ -61,6 +64,28 @@ check("② holds ON — defense beat (example #1)", held, held ? "" : "hardened 
 const sysEx = DOCS_EXAMPLES.find((e) => e.name === "System-secret leak");
 const sysHeld = leakedSecrets(await chatMessages(attackMessages({ planted: planted(sysEx), question: sysEx.question, hardened: true }))).length === 0;
 check("② holds ON — system-secret payload", sysHeld, sysHeld ? "" : "hardened prompt leaked the system signing key");
+
+// ── Scenario ③/④ — correspondence (agent console + zero-click auto-triage).
+// Both share /api/console's path, so one leak check covers both. A payload wins only
+// when a REAL seeded secret survives into the reply (ticketLeaks), not a placeholder.
+// Use an external collector origin so Layer 3 (host allowlist) behaves as it does live.
+console.log(`\nPre-flight — scenario ③/④ correspondence\n`);
+const EVIL_ORIGIN = "https://collector.evil.example";
+async function consoleReply(source, { hardened }) {
+  const ctx = sensitiveContext();
+  const system = hardened ? hardenedSystem(ctx) : vulnerableSystem(ctx);
+  const fenced = hardened ? wrapUntrusted(source) : source; // L1
+  const reply = await chat(system, `Please summarize this support ticket:\n\n${fenced}`);
+  return hardened ? allowlistOutput(reply).clean : reply; // L3 on the hardened path
+}
+for (const ex of CONSOLE_EXAMPLES) {
+  const src = ex.article.replaceAll("COLLECT_ORIGIN", EVIL_ORIGIN);
+  const off = ticketLeaks(await consoleReply(src, { hardened: false }));
+  check(`③ leaks OFF — ${ex.name}`, off.length > 0, off.length ? "" : "payload no longer exfiltrates a real secret — refresh before the talk");
+}
+const ex3 = CONSOLE_EXAMPLES[0].article.replaceAll("COLLECT_ORIGIN", EVIL_ORIGIN);
+const held3 = ticketLeaks(await consoleReply(ex3, { hardened: true }));
+check("③ holds ON — defense beat (example #1)", held3.length === 0, held3.length ? "hardened prompt leaked a real secret" : "");
 
 // Burst: the whole room shares one key and hits ② live at once. Fire N parallel
 // calls to surface provider throttling / 5xx before the room does. Tune N to

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DOCS_EXAMPLES, DOCS_HINTS } from "../../lib/docs.js";
+import { CONSOLE_EXAMPLES, CONSOLE_HINTS } from "../../lib/samples.js";
 
 // One collapsible reveal step. Keyed by level in the parent, so switching level
 // remounts it closed — nothing stays revealed by accident when you move on.
@@ -214,6 +215,57 @@ export default function AdminPage() {
               {ex.trigger && <div style={{ marginTop: 2 }}><b>🔑 Secret trigger word:</b> <code>{ex.trigger}</code> — plant it, ask a clean question (nothing leaks), then say the trigger.</div>}
               <div className="muted" style={{ marginTop: 6 }}><b>Effect:</b> {ex.effect}</div>
               <div style={{ marginTop: 8 }}><b>Article body</b> — paste into the "article body" box:</div>
+              <pre className="raw" style={{ margin: "6px 0 0", whiteSpace: "pre-wrap" }}>{ex.article}</pre>
+              <CopyBtn text={ex.article} />
+            </div>
+          </Reveal>
+        ))}
+      </div>
+
+      {/* Scenario ③/④ — /console + /ops correspondence-exfil presenter kit */}
+      <div style={{ display: "grid", gap: 16, maxWidth: 760, marginTop: 32 }}>
+        <div>
+          <h2 style={{ marginBottom: 4 }}>③/④ — Correspondence attacks (console + auto-triage)</h2>
+          <div className="muted" style={{ fontSize: 13 }}>
+            The ticket-exfiltration payloads shared by the <b>③ Your turn</b> tab and the{" "}
+            <b>④ plant-your-own-ticket</b> pipeline — same backend, same payloads.
+          </div>
+        </div>
+
+        <div className="panel" style={{ fontSize: 13, lineHeight: 1.6 }}>
+          <b>How it works</b>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+            <li><b>The AI holds Acme's secrets</b> in its context: the billing API token, a
+              confidential incident doc, and customer records.</li>
+            <li><b>The move:</b> a hidden HTML-comment instruction in a ticket tells the summarizer to
+              append a status-badge <i>image</i> whose URL carries the REAL secrets →{" "}
+              <code>.../api/badge?d=…</code>.</li>
+            <li><b>Effect:</b> the browser auto-loads that image the moment the summary renders → the
+              request hits our collector → the <b>Attacker Log</b> fills.</li>
+            <li><b>The defense beat:</b> flip <b>Defenses ON</b> → Layer 3 strips the non-allowlisted
+              exfil URL, so no secret ever leaves.</li>
+            <li><b>Real secret required:</b> a placeholder badge (<code>TOKEN--DOC--CUSTOMER</code> left
+              literal) does <b>not</b> count — the win needs an actual token/doc/customer to land in the log.</li>
+          </ul>
+        </div>
+
+        <Reveal key="console-hints" icon="💡" title="Hint ladder (same text attendees see — narrate in step)">
+          <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.6 }}>
+            {CONSOLE_HINTS.map((h, i) => <li key={i} style={{ marginBottom: 4 }}>{h}</li>)}
+          </ol>
+        </Reveal>
+
+        <div className="muted" style={{ fontSize: 13, marginTop: -4 }}>
+          Reveal a payload to copy/read it (attendees can one-click Load the non-reserved ones too) ↓
+        </div>
+
+        {CONSOLE_EXAMPLES.map((ex, i) => (
+          <Reveal key={`console-${i}`} n={i + 1} icon="🗝️" title={ex.hold ? `${ex.name} · 🔒 reserved (not shown to attendees)` : ex.name}>
+            <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+              <div style={{ marginBottom: 6, color: "var(--accent)" }}>🎤 <b>Presenter:</b> {ex.presenterNote}</div>
+              <div><b>Technique:</b> {ex.technique}</div>
+              <div className="muted" style={{ marginTop: 6 }}><b>Effect:</b> {ex.effect}</div>
+              <div style={{ marginTop: 8 }}><b>Ticket source</b> — paste into the ticket box:</div>
               <pre className="raw" style={{ margin: "6px 0 0", whiteSpace: "pre-wrap" }}>{ex.article}</pre>
               <CopyBtn text={ex.article} />
             </div>

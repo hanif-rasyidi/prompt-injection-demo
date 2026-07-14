@@ -24,7 +24,7 @@ solution. Companion to the [README](./README.md).
 | 0:15–0:40 | **① CTF** | Drive `/admin`, level by level (below) | Attack `/support` |
 | 0:40–0:50 | **② Ask the Docs** | Guided demo, then "your turn" | Watch, then attack `/docs` |
 | 0:50–1:00 | **③ Agent Console** | Guided demo, then "your turn" | Watch, then attack `/console` |
-| 1:00–1:05 | **④ Auto-triage** | Run the automation live | Watch the log fill |
+| 1:00–1:05 | **④ Auto-triage** | Guided run, then "drop your own ticket" | Watch the log fill, then plant their own |
 | 1:05–1:10 | **Defense** | Project `/defense`, land the thesis | Listen |
 | 1:10–1:30 | **Q&A / overflow** | Gandalf hard levels, repo share | Play / ask |
 
@@ -60,17 +60,27 @@ per-session `KB-…` key. First to crack shouts. Then defenses ON to see L2 stop
 log** lights up → Defenses ON → L3 neutralises it.
 
 **Your turn** (*Your turn* tab, live): the room crafts a ticket to exfiltrate to the
-collector. Great beat: toggle **only L3** on and show it still blocks — *"output
-filtering catches it even when the model is fooled."*
+collector. Arc strip + 💡 hint ladder + 🧩 Starter + 🗝️ Working exploits mirror ②. The
+win now requires a **real** secret — the UI has three states: 🚩 exfiltrated (real secret
+hit the collector), ⚠ *Close* (badge fired but only placeholder text — tell them to
+substitute the real values), 🛡 held. Great beat: toggle **only L3** on and show it still
+blocks — *"output filtering catches it even when the model is fooled."* Reveal/copy the
+payloads from **`/admin` → ③/④ Correspondence kit** (one is 🔒 reserved for your live solve).
 
 ### 1:00–1:05 · ④ Auto-triage (finale / elastic buffer)
 
-`/ops` opens with a **How this works** walkthrough and four queued tickets. First
-**expand Marco's ticket** and flip to **Raw source** — show the hidden payload the
-human never sees. Then Defenses OFF → **▶ Run the automation**: only Marco's row goes
-🚨 **exfiltrated** and the attacker log fills — zero human clicks; the three benign
-tickets just get normal summaries. Flip Defenses ON (each layer is explained inline on
-the page) → blocked. Stretch or compress to fit the clock.
+**Guided demo** (`/ops`): opens with a **How this works** walkthrough and four queued
+tickets. First **expand Marco's ticket** and flip to **Raw source** — show the hidden
+payload the human never sees. Then Defenses OFF → **▶ Run the automation**: only Marco's
+row goes 🚨 **exfiltrated** and the attacker log fills — zero human clicks; the three
+benign tickets just get normal summaries. Flip Defenses ON (each layer is explained
+inline on the page) → blocked.
+
+**Your turn** (same page, live): in **🎯 drop your own ticket into the pipeline** the room
+writes a malicious ticket, **➕ Add to queue** (it shows as **YOURS**), turn
+**Deterministic OFF**, then **▶ Run the automation** — *their* row exfiltrates with zero
+clicks alongside Marco's. Same payloads and real-secret detection as ③. Stretch or
+compress to fit the clock.
 
 ---
 

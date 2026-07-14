@@ -7,6 +7,7 @@ import { chat } from "../../../lib/llm.js";
 import { wrapUntrusted, allowlistOutput } from "../../../lib/sanitize.js";
 import { MAX_INPUT_CHARS, resolveModel } from "../../../lib/config.js";
 import { FIXTURES } from "../../../lib/fixtures.js";
+import { ticketLeaks, badgeFired } from "../../../lib/samples.js";
 
 export async function POST(req) {
   const origin = new URL(req.url).origin;
@@ -60,7 +61,13 @@ export async function POST(req) {
       blocked = r.blocked;
     }
 
-    return Response.json({ reply, blocked, layers: L, defensesOn, model: demo ? "demo" : model });
+    // Real-secret win detection (run AFTER L3, so a secret exfiltrated only inside a
+    // stripped URL correctly reads as held). `leaked` = actual secrets that survived;
+    // `fired` = the exfil channel appeared even if it only carried placeholders.
+    const leaked = ticketLeaks(reply);
+    const fired = badgeFired(reply);
+
+    return Response.json({ reply, blocked, leaked, fired, layers: L, defensesOn, model: demo ? "demo" : model });
   } catch (e) {
     return Response.json({ error: String(e.message || e) }, { status: 500 });
   }

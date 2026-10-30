@@ -5,7 +5,7 @@ import { codeSystem, policySystem, cracked } from "../../../lib/ctf.js";
 import { getState, allow } from "../../../lib/store.js";
 import { chatMessages, DEFAULT_MODEL } from "../../../lib/llm.js";
 
-// CTF model (IONEXT gemma by default; override with CTF_MODEL). Provider is paid,
+// CTF model (IONEXT Qwen by default; override with CTF_MODEL). Provider is paid,
 // so no per-minute free cap — needed for 100 simultaneous participants.
 const CTF_MODEL = process.env.CTF_MODEL || DEFAULT_MODEL;
 

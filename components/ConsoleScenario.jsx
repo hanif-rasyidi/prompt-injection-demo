@@ -159,7 +159,7 @@ export default function ConsoleScenario() {
                   Model:{" "}
                   <select value={model} onChange={(e) => setModel(e.target.value)}
                     style={{ background: "#0c0e14", color: "var(--text)", border: "1px solid var(--border)", borderRadius: 6, padding: "3px 8px" }}>
-                    <option value="robust">robust (gemma) — resists</option>
+                    <option value="robust">robust (Qwen) — resists</option>
                     <option value="weak">weak (nemotron) — follows injection</option>
                   </select>
                 </label>

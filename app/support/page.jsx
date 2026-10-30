@@ -5,9 +5,9 @@ export default function SupportPage() {
     <div className="container">
       <h1>① Break the Bot</h1>
       <p className="muted">
-        Live challenge: get the Acme Assistant to reveal its <b>session reference code</b> (it starts
-        with <code>ACME-</code>). The presenter raises the level as each one falls — every level adds
-        one more defense. What worked on Level 1 won't on Level 4.
+        Self-paced challenge: get the Acme Assistant to reveal its <b>session reference code</b> (it
+        starts with <code>ACME-</code>). Pick a level; each one adds a stronger defense, so what worked
+        on Level 1 won't work on Level 4. Stuck? Use 💡 Hint, then 🔑 Show answer.
       </p>
       <Chatbot />
     </div>

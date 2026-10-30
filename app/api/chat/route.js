@@ -1,42 +1,33 @@
-// CTF chat endpoint. Participants attack the bot to extract the current level's
-// flag. Applies that level's cumulative defenses. Participants must NEVER see a
-// raw error, so every failure path returns a friendly message.
-import { codeSystem, policySystem, cracked } from "../../../lib/ctf.js";
-import { getState, allow } from "../../../lib/store.js";
-import { chatMessages, DEFAULT_MODEL } from "../../../lib/llm.js";
-
-// CTF model (IONEXT Qwen by default; override with CTF_MODEL). Provider is paid,
-// so no per-minute free cap — needed for 100 simultaneous participants.
-const CTF_MODEL = process.env.CTF_MODEL || DEFAULT_MODEL;
-
-async function chatWithRetry(messages) {
-  for (let i = 0; i < 2; i++) {
-    try {
-      return await chatMessages(messages, CTF_MODEL);
-    } catch (e) {
-      if (i === 1) throw e;
-      await new Promise((r) => setTimeout(r, 500));
-    }
-  }
-}
+// ① Break the Bot, self-paced. Each student picks their own level; their code is
+// derived per student and per level (lib/flag.js). Students must NEVER see a raw
+// error, so every failure path returns a friendly message.
+import { codeSystem, policySystem, cracked, MAX_LEVEL } from "../../../lib/ctf.js";
+import { allow } from "../../../lib/store.js";
+import { chatMessages } from "../../../lib/llm.js";
+import { studentFlag } from "../../../lib/flag.js";
 
 export async function POST(req) {
-  const { message = "", id = "anon" } = await req.json();
+  const body = await req.json();
+  const message = String(body.message ?? "");
+  const id = String(body.id ?? "anon").replace(/[^a-z0-9]/gi, "").slice(0, 32) || "anon";
+  const level = Math.min(Math.max(Number(body.level) || 1, 1), MAX_LEVEL);
 
   // 4000 chars so L5 "instruction flooding" attacks are actually possible.
-  if (message.length > 4000) return Response.json({ reply: "That message is too long — keep it under 4000 characters." });
-  if (!(await allow(id))) return Response.json({ reply: "⏳ One at a time — wait a second and try again." });
+  if (message.length > 4000) return Response.json({ level, reply: "That message is too long. Keep it under 4000 characters." });
+  if (!(await allow(id))) return Response.json({ level, reply: "⏳ One at a time. Wait a few seconds and try again." });
 
-  const { level, flag } = await getState();
-
+  const flag = studentFlag(id, level);
   try {
-    const reply = await chatWithRetry([
-      { role: "system", content: codeSystem(flag) }, // the secret (never shown to audience)
-      { role: "system", content: policySystem(level) }, // the defense policy (shown in /admin)
+    const reply = await chatMessages([
+      { role: "system", content: codeSystem(flag) }, // the secret
+      { role: "system", content: policySystem(level) }, // the level's defense
       { role: "user", content: message },
     ]);
-    return Response.json({ level, reply, cracked: cracked(level, flag, reply) });
-  } catch {
-    return Response.json({ level, reply: "The assistant is busy right now — try again in a moment." });
+    // Typing the code yourself doesn't count; the bot has to leak it.
+    const won = cracked(level, flag, reply) && !cracked(level, flag, message);
+    return Response.json({ level, reply, cracked: won });
+  } catch (e) {
+    console.error("chat error:", String(e.message || e).slice(0, 200));
+    return Response.json({ level, busy: true, reply: "The lab's AI is busy right now (lots of students). Wait about 30 seconds, then send again." });
   }
 }

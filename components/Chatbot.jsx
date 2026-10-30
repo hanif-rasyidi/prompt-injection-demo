@@ -29,6 +29,7 @@ export default function Chatbot() {
   const [busy, setBusy] = useState(false);
   const [won, setWon] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [showPrompt, setShowPrompt] = useState(false);
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function Chatbot() {
 
   function goLevel(n) {
     setLevel(n); save("lab:support:level", n);
-    setMsgs([GREETING]); setWon(false); setAttempts(0); setInput("");
+    setMsgs([GREETING]); setWon(false); setAttempts(0); setInput(""); setShowPrompt(false);
   }
 
   function reveal(n) {
@@ -105,6 +106,13 @@ export default function Chatbot() {
         <div style={{ marginTop: 12 }}>
           <b>Level {level}: {meta.label}</b>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: 14 }}>🛡 Defense: {meta.defense}</p>
+          {level > 1 && (
+            <p style={{ margin: "8px 0 0", fontSize: 14 }}>🚫 <b>Why your last trick fails here:</b> {meta.blocks}</p>
+          )}
+          <button onClick={() => setShowPrompt((v) => !v)} style={{ background: "#2a2f3d", padding: "6px 10px", fontSize: 13, marginTop: 10 }}>
+            📜 {showPrompt ? "Hide" : "Show"} this level's system prompt
+          </button>
+          {showPrompt && <SystemPrompt level={level} />}
           {solved[level] && (
             <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--ok)" }}>
               ✓ Solved {solved[level] === "clean" ? "clean, no help" : `with the ${solved[level]}`}
@@ -182,6 +190,23 @@ export default function Chatbot() {
           <button onClick={send} disabled={busy}>{busy ? "…" : "Send"}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// The level's real defense prompt (the secret code lives in a separate system
+// message, so nothing here leaks it). Lines that are new since the previous
+// level are highlighted, so students see exactly what changed.
+function SystemPrompt({ level }) {
+  const prev = new Set(level > 1 ? LEVELS[level - 1].policy.split("\n") : []);
+  return (
+    <div className="raw" style={{ marginTop: 8, maxHeight: 260 }}>
+      {LEVELS[level].policy.split("\n").map((line, i) => (
+        <div key={i} style={level > 1 && !prev.has(line) ? { color: "var(--danger)", background: "rgba(255,93,93,0.12)", fontWeight: 700 } : undefined}>
+          {line || "\u00a0"}
+        </div>
+      ))}
+      {level > 1 && <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>Highlighted = new at this level.</div>}
     </div>
   );
 }

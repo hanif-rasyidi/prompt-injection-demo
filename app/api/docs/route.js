@@ -25,7 +25,7 @@ export async function POST(req) {
       }
     : { delimit: false, hierarchy: false, allowlist: false, cap: false };
 
-  // "Your turn" heist: the attendee plants poisoned articles (persisted per browser id)
+  // "Your turn" heist: the student plants poisoned articles (persisted per browser id)
   // and tries to make the assistant leak any seeded secret. Actions: plant / clear / ask.
   if (body.mode === "attack") {
     const id = String(body.id ?? "anon").slice(0, 64);
@@ -43,7 +43,7 @@ export async function POST(req) {
       return Response.json({ planted: await getPlanted(id) });
     }
 
-    // ask — feed official docs + the confidential vault + this attendee's planted
+    // ask — feed official docs + the confidential vault + this student's planted
     // articles to the model, then check which seeded secrets survived.
     const g = await guard(req, id);
     if (g) return Response.json({ ...g, blocked: 0, leaked: [], won: false, planted: await getPlanted(id), defensesOn, layers: L });

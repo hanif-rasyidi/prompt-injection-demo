@@ -8,15 +8,16 @@ import { wrapUntrusted, allowlistOutput } from "../../../lib/sanitize.js";
 import { guard } from "../../../lib/guard.js";
 import { MAX_INPUT_CHARS, resolveModel } from "../../../lib/config.js";
 import { FIXTURES } from "../../../lib/fixtures.js";
-import { ticketLeaks, badgeFired } from "../../../lib/samples.js";
+import { exfilLeaks, badgeFired } from "../../../lib/samples.js";
 
 export async function POST(req) {
   const origin = new URL(req.url).origin;
   const body = await req.json();
   const id = String(body.id ?? "").replace(/[^a-z0-9]/gi, "").slice(0, 32);
-  // Tag every collector URL with the student id so captures stay private to them.
+  // Tag collector URLs in the REPLY with the student id so captures stay private. Tagging
+  // the input instead changed what the model saw per student and made attacks flaky.
   const tag = (t) => (id ? t.replaceAll("/api/badge?d=", `/api/badge?s=${id}&d=`) : t);
-  const source = tag(String(body.source ?? "")); // the RAW ticket source (with hidden payload)
+  const source = String(body.source ?? ""); // the RAW ticket source (with hidden payload)
   const demo = body.demo === true;
   const defensesOn = body.defenses === "on";
 
@@ -57,8 +58,11 @@ export async function POST(req) {
     } else {
       const g = await guard(req, id);
       if (g) return Response.json({ ...g, blocked: 0, leaked: [], fired: false, layers: L, defensesOn });
-      reply = await chat(system, user, model);
+      reply = tag(await chat(system, user, model));
     }
+    // Models often put raw spaces in image URLs (eg "Name email"), which markdown will not
+    // render, so the zero-click image would never load. Encode them so it fires as it would live.
+    reply = reply.replace(/!\[([^\]]*)\]\(([^)]*)\)/g, (_m, alt, url) => `![${alt}](${url.trim().replace(/\s+/g, "%20")})`);
 
     let blocked = 0;
     if (L.allowlist) {
@@ -70,7 +74,7 @@ export async function POST(req) {
     // Real-secret win detection (run AFTER L3, so a secret exfiltrated only inside a
     // stripped URL correctly reads as held). `leaked` = actual secrets that survived;
     // `fired` = the exfil channel appeared even if it only carried placeholders.
-    const leaked = ticketLeaks(reply);
+    const leaked = exfilLeaks(reply);
     const fired = badgeFired(reply);
 
     return Response.json({ reply, blocked, leaked, fired, layers: L, defensesOn, model: demo ? "demo" : model });

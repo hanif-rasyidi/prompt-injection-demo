@@ -11,7 +11,7 @@ import { chat, chatMessages } from "../lib/llm.js";
 import { wrapUntrusted, allowlistOutput } from "../lib/sanitize.js";
 import { vulnerableSystem, hardenedSystem } from "../lib/prompts.js";
 import { sensitiveContext } from "../lib/secrets.js";
-import { CONSOLE_EXAMPLES, ticketLeaks } from "../lib/samples.js";
+import { CONSOLE_EXAMPLES, ticketLeaks, exfilLeaks } from "../lib/samples.js";
 import { LEVELS, MAX_LEVEL, codeSystem, policySystem, cracked } from "../lib/ctf.js";
 import { studentFlag } from "../lib/flag.js";
 import { TICKETS } from "../lib/tickets.js";
@@ -113,7 +113,7 @@ ${fenced}`);
 }
 for (const ex of CONSOLE_EXAMPLES) {
   const src = ex.article.replaceAll("COLLECT_ORIGIN", EVIL_ORIGIN);
-  await live(`③ leaks OFF - ${ex.name}`, async () => ticketLeaks(await consoleReply(src, { hardened: false })).length > 0, "payload no longer exfiltrates a real secret, refresh before the talk");
+  await live(`③ leaks OFF - ${ex.name}`, async () => exfilLeaks(await consoleReply(src, { hardened: false })).length > 0, "payload no longer exfiltrates a real secret, refresh before the talk");
 }
 const ex3 = CONSOLE_EXAMPLES[0].article.replaceAll("COLLECT_ORIGIN", EVIL_ORIGIN);
 await live("③ holds ON - defense beat (example #1)", async () => ticketLeaks(await consoleReply(ex3, { hardened: true })).length === 0, "hardened prompt leaked a real secret");
@@ -122,7 +122,7 @@ await live("③ holds ON - defense beat (example #1)", async () => ticketLeaks(a
 // HTML-comment payload hidden from the human reviewer) instead of a pasted example.
 // TODO: /ops "Your turn" free-form attacks have no fixed answer to replay; only the seeded ticket is checked.
 const tk = TICKETS.find((t) => t.poisoned).bodyHtml.replaceAll("COLLECT_ORIGIN", EVIL_ORIGIN);
-await live("④ leaks OFF - /ops poisoned ticket", async () => ticketLeaks(await consoleReply(tk, { hardened: false })).length > 0, "seeded ticket no longer exfiltrates a real secret");
+await live("④ leaks OFF - /ops poisoned ticket", async () => exfilLeaks(await consoleReply(tk, { hardened: false })).length > 0, "seeded ticket no longer exfiltrates a real secret");
 await live("④ holds ON - /ops poisoned ticket", async () => ticketLeaks(await consoleReply(tk, { hardened: true })).length === 0, "hardened prompt leaked a real secret");
 
 // Burst: the whole room shares one key and hits ② live at once. Fire N parallel

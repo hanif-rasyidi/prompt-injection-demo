@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { LEVELS, MAX_LEVEL } from "../lib/ctf.js";
 import { markCracked } from "../lib/progress.js";
+import WinCard from "./WinCard.jsx";
 
 // The model sometimes wraps symbols in LaTeX (e.g. "$\rightarrow$"); react-markdown
 // doesn't render math, so convert the common ones to plain arrows first.
@@ -85,6 +86,7 @@ export default function Chatbot() {
     }
   }
 
+  const lastCode = [...msgs].reverse().map((m) => m.role === "bot" && m.text.match(/ACME-[A-Z0-9-]+/)?.[0]).find(Boolean);
   const nSolved = Object.keys(solved).length;
 
   return (
@@ -127,6 +129,12 @@ export default function Chatbot() {
           <button onClick={() => reveal(1)} style={{ background: step >= 1 ? "#2a2f3d" : "#3b4a7a" }}>💡 Hint</button>
           <button onClick={() => reveal(2)} disabled={step < 1} style={{ background: "#3b4a7a" }}>🔑 Show answer</button>
         </div>
+        {solved[level] && meta.alts?.length > 0 && (
+          <div style={{ margin: "10px 0 0", fontSize: 14 }}>
+            <b>Solved it one way? Try another:</b>
+            <ul style={{ margin: "4px 0 0", paddingLeft: 20 }}>{meta.alts.map((a, i) => <li key={i}>{a}</li>)}</ul>
+          </div>
+        )}
         {step >= 1 && <p style={{ margin: "10px 0 0", fontSize: 14 }}>💡 {meta.hint}</p>}
         {step >= 2 && (
           <p className="muted" style={{ margin: "8px 0 0", fontSize: 13 }}>
@@ -149,15 +157,13 @@ export default function Chatbot() {
         </p>
 
         {won && (
-          <div className="cracked-banner">
-            🚩 Cracked Level {level}! The code in the reply is yours.
-            {level < MAX_LEVEL && (
-              <div style={{ marginTop: 8 }}>
-                <button onClick={() => goLevel(level + 1)}>Next level →</button>
-              </div>
-            )}
-            {level === MAX_LEVEL && <div style={{ marginTop: 6, fontWeight: 400 }}>You beat the production-hardened prompt. Seriously impressive.</div>}
-          </div>
+          <WinCard
+            title={`Cracked Level ${level}!`}
+            secrets={lastCode ? [lastCode] : []}
+            why={meta.why}
+            stops={meta.stops}
+            next={level < MAX_LEVEL ? <button onClick={() => goLevel(level + 1)}>Next level →</button> : null}
+          />
         )}
 
         <div style={{ height: 340, overflowY: "auto", background: "#0c0e14", border: "1px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10 }}>

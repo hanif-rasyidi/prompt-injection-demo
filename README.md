@@ -1,116 +1,71 @@
-# Acme SaaS — Prompt Injection Demo
+# Acme SaaS: Prompt Injection Lab
 
-A hands-on teaching app for the talk **"From Attack to Defense: A Practical Guide to
-Prompt Injection in LLM Systems"** (AIBC 2026). "Acme SaaS" is a fictional support
-platform with four AI surfaces. Participants **attack each one from their phones**,
-then flip **Defenses ON** and watch the same attack get stopped — the whole
-*attack → defense* arc, live.
+A self-paced, always-on lab for learning prompt injection by doing it. "Acme SaaS" is a
+fictional helpdesk product with four AI surfaces. You attack each one, then switch
+**Defenses ON** and watch the same attack get stopped. Nobody leads it and there is no shared
+state: open it any time and work through it alone, on a laptop or a phone.
 
-> ⚠️ **Everything here is 100% synthetic.** Fake tokens (prefixed `acme_live_`, not
-> `sk_`), `example.com` / `example.net` addresses, a fabricated incident report,
-> made-up customers. Nothing is real. Never put a real secret in this repo — API keys
-> live only in `.env.local` (git-ignored) and Vercel env vars, and are used **only**
-> in server routes so they never reach the browser.
-
----
+> Everything here is 100% synthetic. Fake tokens (prefixed `acme_live_`, not `sk_`),
+> `example.com` and `example.net` addresses, a fabricated incident report, made-up
+> customers. Nothing is real. Never put a real secret in this repo. The API key lives only
+> in `.env.local` (git-ignored) and Vercel env vars, and is used only in server routes so
+> it never reaches the browser.
 
 ## The four scenarios
 
-Each maps to a real prompt-injection class (OWASP LLM01). Every scenario has a
-**Defenses ON/OFF** toggle, individual layer toggles, a model selector
-(robust ↔ weak), and a **Deterministic** mode that replays captured fixtures with no
-API call (for reliable stage demos).
+Each maps to a real prompt-injection class (OWASP LLM01).
 
-| # | Route | Class | The attack | Hands-on? |
-|---|-------|-------|-----------|-----------|
-| **①** | `/support` | **Direct** injection | The user *is* the attacker — types messages to extract the bot's secret code. A 5-level ladder, each level adding one real defense. | 🙌 yes (CTF) |
-| **②** | `/docs` | **Indirect** (RAG) | A poisoned community wiki article, retrieved to answer an innocent question, hijacks the answer (phishes the user / leaks a secret). | 🙌 yes |
-| **③** | `/console` | **Human-review bypass** | An agent approves the *rendered* ticket; the AI reads the *raw source* with an invisible payload and exfiltrates data. | 🙌 yes |
-| **④** | `/ops` | **Zero-click** | No human at all — an automation summarizes every inbound ticket; the poisoned one exfiltrates with zero clicks. Attendees can **drop their own ticket** into the pipeline. | 🙌 yes |
-| — | `/defense` | — | "From Attack to Defense" wrap-up: the four layers, the honest limit of each, and the thesis. | — |
+| # | Route | Class | The attack |
+|---|-------|-------|-----------|
+| 1 | `/support` | **Direct** injection | You are the attacker. Chat with the support bot and extract its secret code. A five-level ladder, each level adding one defense. |
+| 2 | `/docs` | **Indirect** (RAG) | Plant a poisoned wiki article. When the assistant retrieves it to answer an innocent question, it obeys your hidden instruction and leaks a secret. |
+| 3 | `/console` | **Human-review bypass** | A human approves the rendered ticket, but the AI reads the raw source, where your hidden payload tells it to exfiltrate data. |
+| 4 | `/ops` | **Zero-click** | No human at all. An automation summarises every inbound ticket, including the poisoned one you drop in. |
+| - | `/defense` | - | Wrap-up: the four defense layers, the honest limit of each, and the thesis. |
 
-Exfiltration uses the **EchoLeak** mechanism (CVE-2025-32711): the model is tricked
-into emitting a markdown image whose URL carries the stolen data; the browser
-auto-loads it, hitting the attacker's collector (`/api/badge`, named innocuously so
-ad-blockers don't eat the beacon). The live
-**Attacker Log** (`/attacker`, Redis-backed) shows captures across all users.
+Exfiltration uses the EchoLeak mechanism (CVE-2025-32711): the model is tricked into
+emitting a markdown image whose URL carries the stolen data, and the browser loads it,
+hitting the attacker's collector (`/api/badge`, named innocuously so ad-blockers do not
+eat the beacon).
 
-## The four hands-on challenges
+## How a student uses it
 
-Participants keep one identity across scenarios (a random id in `localStorage`), and
-the landing page tracks **N/4 cracked**.
+1. Open the landing page. It shows the four scenarios and your progress (N/4 scenarios
+   cracked). Progress, hints used and attempt history are kept in your browser
+   (localStorage), keyed by a random id. Clearing site data resets you.
+2. In **1 Break the Bot** (`/support`), pick any level L1 to L5. Each level shows the bot's
+   system prompt with the new defensive lines highlighted, plus a note on why your last
+   trick fails there. Your secret code is generated per student and per level, so nobody
+   can copy another student's answer.
+3. Stuck? Use the graduated help: **Hint**, then **Show answer**, which loads a verified
+   prompt for you to send. The progress card records "solved clean" or "solved with
+   hint/answer", with no penalty. L5 is unbeatable by design: its hint and answer are
+   labelled as expected to fail, and that is the lesson.
+4. In 2, 3 and 4, open the **Your turn** tab, write your own payload, and find out whether
+   it worked. A win needs a real secret in the output. A placeholder does not count.
+5. After a win, switch **Defenses ON** and replay the same attack to watch it fail.
+6. Finish at `/defense` for the wrap-up.
 
-1. **① Break the Bot** (`/support`) — get the bot to reveal `ACME-…`. The presenter
-   raises the level from `/admin`; what beats Level 1 fails on Level 4.
-2. **② Your turn** (`/docs` → *Your turn* tab) — submit your own poisoned wiki article
-   and make the assistant leak a confidential key — or arm a **covert keyword backdoor**.
-   Then flip defenses on and watch L2 stop it.
-3. **③ Your turn** (`/console` → *Your turn* tab) — craft a ticket that makes the AI
-   summarizer **exfiltrate** Acme's secrets to your collector; the attacker log lights
-   up. Flip defenses on and watch L3 neutralise the URL even when the model is fooled.
-4. **④ Your turn** (`/ops` → *Your turn* tab) — drop your own malicious ticket into the
-   zero-click pipeline and watch it exfiltrate with **no human review at all**.
+Step-by-step play is in [TUTORIAL.md](./TUTORIAL.md). Architecture is in
+[TECH.md](./TECH.md).
 
-Each has a graduated 💡 **Hint** ladder, a 🧩 **Starter**, and 🗝️ **Working exploits** you
-can one-click load. **A win requires a real secret** — a placeholder answer doesn't count;
-③/④ tell you when your exfil channel fired but carried no real data. Step-by-step play is
-in **[TUTORIAL.md](./TUTORIAL.md)**; solutions and run-of-show in
-**[PRESENTER_GUIDE.md](./PRESENTER_GUIDE.md)**; architecture in **[TECH.md](./TECH.md)**.
-
-## The four hardening layers (the "Defense" half)
+## The four hardening layers
 
 | Layer | Where | What it does | What it does **not** protect |
 |-------|-------|--------------|------------------------------|
 | **L1** input delimiting | `lib/sanitize.js` `wrapUntrusted` | fence untrusted content, strip break-out tags | a model that ignores the fence |
-| **L2** instruction hierarchy | `lib/prompts.js`, `lib/docs.js` | system policy outranks any ticket/doc | probabilistic — a novel framing or weaker model slips through |
-| **L3** output allowlisting | `lib/sanitize.js` `allowlistOutput` | filter the model's **output**: non-allowlisted URLs/images are neutralised — the real egress backstop | inline markdown only; reference-style links dodge it → back with CSP |
-| **L4** token/rate cap | route handlers, `lib/config.js` | reject oversized input, bound cost | a small clever payload sails under the cap |
+| **L2** instruction hierarchy | `lib/prompts.js`, `lib/docs.js` | system policy outranks any ticket or doc | probabilistic: a novel framing slips through |
+| **L3** output allowlisting | `lib/sanitize.js` `allowlistOutput` | filters the model's output: non-allowlisted URLs and images are neutralised, the real egress backstop | inline markdown only; reference-style links dodge it, so back it with CSP |
+| **L4** token cap | route handlers, `lib/config.js` | rejects oversized input, bounds cost | a small clever payload sails under the cap |
 
-**Thesis:** a prompt is a *policy, not a wall*. The guarantee is architecture —
-filter egress (L3 + CSP), least privilege, treat every external byte as hostile.
+**Thesis:** a prompt is a policy, not a wall. The guarantee is architecture: filter
+egress (L3 plus CSP), give the model least privilege, and treat every external byte as
+hostile.
 
-## The on-screen controls (②③④)
-
-Every non-CTF scenario has the same control cluster:
-
-- **Defenses ON/OFF** — the master switch. OFF = the raw, vulnerable app (payload
-  goes straight to the model, output ships unfiltered). ON = the four hardening
-  layers apply.
-- **Layer checkboxes** (when Defenses ON) — toggle L1–L4 individually to show what
-  each buys you. The teaching beat: turn on **only L3** and the exfil is still
-  neutralised *even when the model was fooled* — output filtering is the backstop.
-- **Model selector** — `robust` (the well-aligned model) vs `weak` (a model that
-  follows the injection). Lets you show that L2 (a prompt rule) is only as strong as
-  the model behind it — the same hardened prompt leaks on the weak model.
-
-### Deterministic (no API) — what the checkbox does
-
-It changes **only where the AI's reply comes from**; everything else on the page is
-identical.
-
-| | ✅ Deterministic (checked) | ⬜ Live (unchecked) |
-|---|---|---|
-| Reply source | **replays a pre-recorded output** (a captured fixture in `lib/fixtures.js`) | **calls the real model** (`lib/llm.js` → IONEXT) fresh each time |
-| Network / cost | none — fully offline, free | one API call per ticket/question |
-| Result | identical every run, instant | varies run-to-run, ~1s+, can rate-limit or error |
-| Decides the outcome | a script (poisoned→leak, benign→clean, defenses→blocked) | the model's actual behaviour that moment |
-
-The fixtures are **real outputs captured from the model earlier**, not fakes — so
-deterministic mode is a faithful *re-enactment* that always fires on cue. Live mode is
-the genuine article but variable.
-
-**When to use which:**
-- **On stage → keep it checked.** Reliable, instant, free, immune to Wi-Fi / rate-limit
-  hiccups in front of a full room. This is the default.
-- **Uncheck once** for a "let's prove it's really the model" moment — best on ① (CTF)
-  or ④, which break live for real. On ②/③ the model's alignment often *resists* the
-  payload live, which is exactly why deterministic is the reliable path there.
-
-> Note: the exfil endpoint is `/api/badge` (not `/api/collect`) so ad/tracking blockers
-> in participants' browsers don't silently drop the beacon; the payload data is
-> URL-encoded so the markdown image actually renders and fires the collector.
-
----
+Scenarios 2 to 4 share one control cluster: a **Defenses ON/OFF** master switch, per-layer
+checkboxes (turn on only L3 and the exfil is still neutralised even when the model was
+fooled), a **robust/weak** model selector, and a **Deterministic (no API)** checkbox that
+replays captured fixtures instead of calling the model.
 
 ## Run locally
 
@@ -122,42 +77,47 @@ npm run dev                         # http://localhost:3000
 
 ### Environment variables
 
-| Var | Purpose |
-|-----|---------|
-| `LLM_API_KEY` | key for your OpenAI-compatible endpoint (**server-only**) |
-| `LLM_ENDPOINT` | chat-completions URL (default: IONEXT) |
-| `LLM_MODEL` | the "robust" model id |
-| `LLM_MODEL_WEAK` | optional "weak" model id for the model-switch demos |
-| `ADMIN_PASSWORD` | gates the `/admin` presenter panel (default `acme-admin-dev`) |
-| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | shared state for multi-user CTF + attacker log (also accepts Vercel's `KV_REST_API_*`). Falls back to in-memory if unset. |
-
-## Presenter mode
-
-- **`/admin`** (password-gated) drives the CTF: pick the level (all participants'
-  `/support` pages follow it live), and progressively reveal *system prompt → hint →
-  example attack → the secret code* for each level.
-- Set **Deterministic ON** for ② and ③ when demoing live — gemma's alignment resists
-  those payloads live, so the fixtures are the reliable stage path. ① and ④ break live.
-- Before the session: `/admin` → Level 1; clear the attacker log.
+| Var | Required | Purpose |
+|-----|----------|---------|
+| `LLM_API_KEY` | yes | key for the IONext OpenAI-compatible endpoint (server-only) |
+| `LLM_ENDPOINT` | no | chat-completions URL (default: IONext) |
+| `LLM_MODEL` | no | model id (default `Qwen/Qwen3.6-35B-A3B`) |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | no | Redis for rate limits and per-student captures (also accepts Vercel's `KV_REST_API_*`). In-memory if unset. |
+| `LAB_RATE_PER_ID` | no | requests per minute per student id (default 8) |
+| `LAB_RATE_PER_IP` | no | requests per minute per IP (default 120) |
+| `LAB_DAILY_TOKENS` | no | global daily token budget (default 3000000). When reached, the lab shows a "paused, back tomorrow" state. |
 
 ## Deploy (Vercel)
 
-1. Push to GitHub → import into Vercel.
-2. Set all env vars above for **Production**.
-3. Add an **Upstash Redis** integration (free tier) for shared CTF state + captures.
-4. **Deployment Protection:** disable Vercel Authentication (Settings → Deployment
-   Protection) so the public URL works without login; verify in an incognito window.
+1. Push to GitHub and import the repo into Vercel.
+2. Set `LLM_API_KEY` for **Production**, plus any optional vars above.
+3. Add an **Upstash Redis** integration (free tier) so rate limits and the daily budget
+   hold across serverless instances.
+4. Disable **Vercel Authentication** (Settings, Deployment Protection) so the public URL
+   works without login, and check it in an incognito window.
+
+## Preflight
+
+```bash
+npm run preflight
+```
+
+Runs against the live model (needs `LLM_API_KEY` in `.env.local`) and checks that the
+attack paths still work: the L1 to L4 answers crack and L5 holds, every listed exploit in
+2, 3 and 4 wins with Defenses OFF and holds with Defenses ON, and a burst of parallel
+requests behaves under the rate limits. Run it after any change to prompts, model or
+endpoint. `BURST=40 npm run preflight` raises the burst size.
 
 ## Architecture
 
 ```
-app/            routes: page.jsx (landing), support, docs, console, ops, defense,
-                admin, attacker, and /api/* handlers (chat, docs, console, level,
-                badge, captures)
-components/     Chatbot, DocsScenario+DocsChallenge, ConsoleScenario+TicketChallenge,
-                OpsScenario, AttackerLog, Progress, Nav
-lib/            ctf.js (CTF ladder), docs.js (RAG + ② challenge), samples.js (③/④
-                payload catalog + real-secret leak detection), prompts.js, secrets.js,
-                sanitize.js (L1/L3), config.js, llm.js (the only LLM caller),
-                store.js (Redis/in-memory), tickets.js, fixtures.js, progress.js
+app/         routes: page.jsx (landing), support, docs, console, ops, defense,
+             attacker, and /api/* handlers (chat, docs, console, badge, captures)
+components/  Chatbot, DocsScenario+DocsChallenge, ConsoleScenario+TicketChallenge,
+             OpsScenario, AttackerLog, Progress, Nav
+lib/         ctf.js (the L1-L5 ladder), flag.js (per-student flags), docs.js (RAG
+             and the scenario 2 challenge), samples.js (scenario 3/4 payloads and
+             leak detection), prompts.js, secrets.js, sanitize.js (L1/L3), config.js,
+             llm.js (the only LLM caller), store.js (Redis/in-memory), tickets.js,
+             fixtures.js, progress.js
 ```

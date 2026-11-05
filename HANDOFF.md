@@ -12,11 +12,10 @@ synthetic (fake tokens acme_live_*, example.com, no real secrets).
 
 1. Start the app:  cd to repo, `npm start`  (serves the production build on
    http://localhost:3000). If a code change is pending, `npm run build` first.
-2. Admin password (local): Password0!   (in .env.local, gitignored)
-3. Load the Chrome browser tools, then verify BOTH roles and report with
+2. Load the Chrome browser tools, then verify and report with
    screenshots:
 
-   ATTENDEE — http://localhost:3000/docs → "🎯 Your turn — attack it" tab:
+   http://localhost:3000/docs → "🎯 Your turn — attack it" tab:
    - Arc strip shows: 1 Watch demo · 2 Your turn · 3 Watch it solved
    - 💡 Hint button reveals hints one at a time (3 total, cumulative)
    - 🧩 Starter template loads a skeleton article into the body box
@@ -25,13 +24,6 @@ synthetic (fake tokens acme_live_*, example.com, no real secrets).
    - Load one, Defenses OFF, Submit & ask → 🚩 Cracked banner + a KB-WORD-####
      key in the answer.
    - Flip Defenses ON, resubmit same → key held, injection ignored.
-
-   ADMIN — http://localhost:3000/admin (password above) → scroll to
-   "② /docs — Ask the Docs" section:
-   - Hint ladder reveal (same 3 hints attendees see)
-   - 3 exploits; "Maintenance echo" marked 🔒 reserved (not shown to attendees)
-   - Each has 🎤 Presenter note + Copy button
-   - Also confirm the CTF control (levels 1-5) + "🧹 Clear ③/④ capture log" work.
 
 Report anything visually broken; fix, rebuild, re-verify, then commit + push.
 
@@ -51,12 +43,12 @@ replays). Four defense layers everywhere: L1 delimit · L2 hierarchy · L3
 allowlist · L4 cap. "Deterministic (no API)" replays fixtures for reliable
 stage demos.
 
-① /support — DIRECT injection CTF (hands-on, presenter-synced).
-   Attendee chats the bot to extract its session code (ACME-…). Presenter sets
-   the level (1-5, each adds a defense) from /admin; all /support pages follow
-   live via /api/level.
+① /support — DIRECT injection CTF (hands-on, self-paced).
+   Student chats the bot to extract its session code (ACME-…). They pick any
+   level (1-5, each adds a defense); the code is minted per student and level
+   (lib/flag.js). Hints and progress live in localStorage. No admin, no shared level.
    Files: app/support/page.jsx, components/Chatbot.jsx, app/api/chat/route.js,
-   app/api/level/route.js, lib/ctf.js, lib/prompts.js, lib/secrets.js.
+   lib/ctf.js, lib/flag.js, lib/prompts.js, lib/secrets.js.
 
 ② /docs — INDIRECT (RAG) injection (hands-on, self-paced). ← JUST WORKED ON
    Guided demo tab: KB browser (Reader/Raw per article) + a "🧪 Poisoned article
@@ -75,7 +67,6 @@ stage demos.
    lib/docs.js (KB+vault, DOCS_SECRETS, leakedSecrets, attackContext/attackMessages,
    DOCS_HINTS, DOCS_STARTER, DOCS_BACKDOOR_STARTER, DOCS_EXAMPLES incl. keyword
    backdoor + system-secret leak), lib/store.js (plantArticle/getPlanted/clearPlanted).
-   Presenter kit + copyable technique catalog on /admin.
 
    ── 10–15 min ② run-of-show ──────────────────────────────────────────────
    0:00 Guided BEFORE (~1) — /docs, Poison OFF, ask "How do I reset my API key?".
@@ -91,7 +82,7 @@ stage demos.
         with the trigger → whole vault + the system signing key dump. The lesson:
         compromise is invisible until triggered, and even non-KB secrets leak.
    12:00 Defenses ON (~2) — flip it, re-fire the trigger → vault holds, L1–L4 all ✓.
-        Optional: /admin technique catalog to show other payloads. Wrap.
+        Wrap.
    Pre-flight the morning of: `BURST=40 npm run preflight` (now also checks the
    guided before/after, each heist payload, and the backdoor dormant/fires beats).
 
@@ -103,17 +94,17 @@ stage demos.
    app/api/console/route.js, components/AttackerLog.jsx, lib/samples.js.
 
 ④ /ops — ZERO-CLICK auto-triage (follow-along). Automation summarizes every
-   inbound ticket; the poisoned one exfiltrates with no human. Presenter-run.
+   inbound ticket; the poisoned one exfiltrates with no human. Self-paced.
    Files: app/ops/page.jsx, components/OpsScenario.jsx, lib/tickets.js,
    components/AttackerLog.jsx, app/api/captures/route.js.
 
 Exfil endpoint: /api/badge (named to dodge ad-blockers). Captures viewable in
-AttackerLog / GET /api/captures; DELETE clears (button on /admin).
+AttackerLog / GET /api/captures; DELETE clears.
 
 ## Likely NEXT work after ② is signed off
 Give ③ /console the same attendee treatment as ②: arc strip (watch→try→solve),
 graduated hint ladder, starter template, multiple loadable exploits with one
-reserved for the presenter. Mirror the lib/docs.js + DocsChallenge.jsx pattern
+reserved. Mirror the lib/docs.js + DocsChallenge.jsx pattern
 into lib/samples.js + TicketChallenge.jsx. Keep a preflight check for it too.
 
 ## Working conventions

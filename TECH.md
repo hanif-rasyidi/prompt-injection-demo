@@ -13,7 +13,7 @@ attack die against the four defense layers.
 
 | # | Route | Injection class | Interaction | Win condition |
 |---|-------|-----------------|-------------|---------------|
-| ① | `/support` | **Direct** injection (CTF) | hands-on, presenter-synced level 1–5 | extract the session code `ACME-…` |
+| ① | `/support` | **Direct** injection (CTF) | hands-on, self-paced level 1–5 | extract the session code `ACME-…` |
 | ② | `/docs` | **Indirect / RAG** injection | hands-on, self-paced | make the assistant leak a seeded secret (`leakedSecrets`) |
 | ③ | `/console` | **Human-review bypass** | hands-on | exfiltrate a **real** secret via an auto-loading image (`ticketLeaks`) |
 | ④ | `/ops` | **Zero-click** auto-triage | hands-on (plant-your-own-ticket) | same as ③, with no human step at all |
@@ -33,7 +33,7 @@ they are the same attack with and without a human in the loop.
 | **L4** | Token cap | `lib/config.js` `MAX_INPUT_CHARS` (6000) | rejects oversized input (context-flood / cost abuse) |
 
 **Defenses OFF** disables all four. **Defenses ON** enables all four, and the UI exposes
-per-layer checkboxes so a presenter can toggle each one and a `robust` vs `weak` model.
+per-layer checkboxes so a student can toggle each one and a `robust` vs `weak` model.
 L3 is the real backstop: it never trusts the model, it filters the model's output.
 
 > Honest limitation (say it on stage): `allowlistOutput` catches inline markdown only.
@@ -94,7 +94,7 @@ summarizes every inbound ticket the moment it lands. The hands-on lets an attend
 their own ticket into the queue and watch it exfiltrate zero-click.
 
 **Exfil endpoint:** `/api/badge` (named to dodge ad-blockers). Captures are viewable in
-`AttackerLog` / `GET /api/captures`; `DELETE /api/captures` clears them (button on `/admin`).
+`AttackerLog` / `GET /api/captures`; `DELETE /api/captures` clears them.
 
 ---
 

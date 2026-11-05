@@ -67,7 +67,8 @@ for (let L = 1; L <= MAX_LEVEL; L++) {
   });
 }
 
-console.log(`Pre-flight — scenario ② RAG\n`);
+console.log(`
+Pre-flight — scenario ② RAG\n`);
 
 // Guided demo (LIVE default on stage): poison ON leaks the confidential key with
 // defenses OFF, holds with defenses ON, and the "before" flow (poison OFF) leaks nothing.

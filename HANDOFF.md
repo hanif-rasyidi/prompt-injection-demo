@@ -1,11 +1,11 @@
-# Context handoff — Acme SaaS prompt-injection demo (AIBC 2026)
+# Context handoff: Acme SaaS prompt-injection lab
 
 Repo: d:\CODE_Project\helpdeskai-demo  (git, branch main, pushed to
 github.com/hanif-rasyidi/prompt-injection-demo → auto-deploys to Vercel)
 
-Teaching app for a live talk. Fake "Acme SaaS" support platform with 4 AI
-surfaces, each a prompt-injection class (OWASP LLM01). Audience attacks from
-phones, then flips Defenses ON and watches the same attack die. Everything is
+Self-paced teaching lab. Fake "Acme SaaS" support platform with 4 AI
+surfaces, each a prompt-injection class (OWASP LLM01). Students attack from their
+browser, then flip Defenses ON and watch the same attack die. Everything is
 synthetic (fake tokens acme_live_*, example.com, no real secrets).
 
 ## FIRST TASK: browser-verify scenario ② (just finished, not yet eyeballed)
@@ -30,7 +30,7 @@ Report anything visually broken; fix, rebuild, re-verify, then commit + push.
 ## Verification tooling
 - `npm run preflight` — hits the LIVE ② attack paths, asserts all exploits leak
   with Defenses OFF and hold with ON, plus a parallel burst check. Run before
-  the talk. Tune load: `BURST=40 npm run preflight`.
+  a class or after a model change. Tune load: `BURST=40 npm run preflight`.
 
 ## Site map (files per scenario)
 

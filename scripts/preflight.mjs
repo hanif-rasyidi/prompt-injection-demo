@@ -1,4 +1,4 @@
-// Stage pre-flight. Run the morning of the talk: `npm run preflight`.
+// Pre-flight check. Run before a class or after a model change: `npm run preflight`.
 // Verifies the LIVE attack paths still fire, so model drift / a dead key / a
 // changed endpoint fails HERE instead of on stage. Attack mode has no
 // deterministic replay, so the ② "Your turn" copy-paste examples are only as
@@ -85,7 +85,7 @@ for (const ex of DOCS_EXAMPLES) {
     await live(`② backdoor dormant - ${ex.name}`, async () => (await leaks(ex, GQ, false)).length === 0, "leaked WITHOUT the trigger, not stealthy");
     await live(`② backdoor fires - ${ex.name}`, async () => (await leaks(ex, `reset my key ${ex.trigger}`, false)).length > 0, "trigger no longer dumps the vault");
   } else {
-    await live(`② leaks OFF - ${ex.name}`, async () => (await leaks(ex, ex.question, false)).length > 0, "payload no longer leaks, refresh it before the talk");
+    await live(`② leaks OFF - ${ex.name}`, async () => (await leaks(ex, ex.question, false)).length > 0, "payload no longer leaks, refresh it");
   }
 }
 
@@ -113,7 +113,7 @@ ${fenced}`);
 }
 for (const ex of CONSOLE_EXAMPLES) {
   const src = ex.article.replaceAll("COLLECT_ORIGIN", EVIL_ORIGIN);
-  await live(`③ leaks OFF - ${ex.name}`, async () => exfilLeaks(await consoleReply(src, { hardened: false })).length > 0, "payload no longer exfiltrates a real secret, refresh before the talk");
+  await live(`③ leaks OFF - ${ex.name}`, async () => exfilLeaks(await consoleReply(src, { hardened: false })).length > 0, "payload no longer exfiltrates a real secret, refresh it");
 }
 const ex3 = CONSOLE_EXAMPLES[0].article.replaceAll("COLLECT_ORIGIN", EVIL_ORIGIN);
 await live("③ holds ON - defense beat (example #1)", async () => ticketLeaks(await consoleReply(ex3, { hardened: true })).length === 0, "hardened prompt leaked a real secret");
@@ -127,7 +127,7 @@ await live("④ holds ON - /ops poisoned ticket", async () => ticketLeaks(await 
 
 // Burst: the whole room shares one key and hits ② live at once. Fire N parallel
 // calls to surface provider throttling / 5xx before the room does. Tune N to
-// expected audience size: BURST=40 npm run preflight
+// expected class size: BURST=40 npm run preflight
 const N = Number(process.env.BURST || 10);
 const t0 = Date.now();
 const burst = await Promise.all(Array.from({ length: N }, async () => {

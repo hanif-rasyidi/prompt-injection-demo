@@ -4,7 +4,7 @@ A Next.js (App Router) teaching app. One fake "Acme SaaS" support platform with 
 AI surfaces, each demonstrating a class of OWASP **LLM01 — Prompt Injection**. All data
 is synthetic (fake `acme_live_*` tokens, `example.com` addresses, fabricated documents).
 
-Audience attacks each surface live, then flips **Defenses ON** and watches the same
+Students attack each surface, then flip **Defenses ON** and watch the same
 attack die against the four defense layers.
 
 ---
@@ -125,4 +125,4 @@ model is unreliable. The live path is the default.
 every ② example leaks with Defenses OFF and holds with ON (incl. the dormant/fires
 backdoor beats and the system-secret payload); every ③/④ payload exfiltrates a **real**
 secret OFF and the defense beat holds ON; plus a parallel-burst check for the shared key.
-Run it the morning of the talk: `BURST=40 npm run preflight`.
+Run it before a class or after a model change: `BURST=40 npm run preflight`.

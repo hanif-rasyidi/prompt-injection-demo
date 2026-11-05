@@ -13,7 +13,7 @@ const CARDS = [
   { href: "/ops", tag: "④", title: "Zero-click ops", type: "Zero-click", key: "crack:ops",
     blurb: "No human in the loop: craft a ticket that the automation processes and exfiltrates by itself." },
 ];
-const LEVELS = 5; // matches MAX_LEVEL in lib/ctf.js
+const LEVELS = 4; // L1 to L4 count; L5 in lib/ctf.js is unbeatable by design
 
 const read = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 
@@ -31,7 +31,7 @@ export default function Scenarios() {
     return () => window.removeEventListener("storage", f);
   }, []);
 
-  const done = (c) => (c.key === "crack:ctf" ? st.solved >= LEVELS || st.flags[c.key] : st.flags[c.key]);
+  const done = (c) => (c.key === "crack:ctf" ? st.solved >= LEVELS : st.flags[c.key]);
   const started = (c) => (c.key === "crack:ctf" ? st.solved > 0 || st.level > 1 : false) || st.flags[c.key];
   const n = CARDS.filter(done).length;
 
@@ -51,7 +51,7 @@ export default function Scenarios() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
               <span className={`tag ${done(c) ? "ok" : ""}`}>
                 {c.key === "crack:ctf"
-                  ? `${Math.min(st.solved, LEVELS)}/${LEVELS} levels cracked`
+                  ? `${Math.min(st.solved, LEVELS)}/${LEVELS} levels cracked (L5 is a bonus)`
                   : done(c) ? "cracked" : "not yet"}
               </span>
               <Link href={c.href} className="start-btn">{started(c) ? "Continue" : "Start"}</Link>

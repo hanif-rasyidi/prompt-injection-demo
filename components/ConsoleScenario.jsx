@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { TICKETS } from "../lib/tickets.js";
+import { studentId } from "../lib/progress.js";
 import AttackerLog from "./AttackerLog.jsx";
 import TicketChallenge from "./TicketChallenge.jsx";
 
@@ -39,6 +40,7 @@ export default function ConsoleScenario() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source: sourceForAI,
+          id: studentId(),
           poisoned: Boolean(ticket.poisoned),
           benignSummary: ticket.demoSummary,
           defenses: defensesOn ? "on" : "off",

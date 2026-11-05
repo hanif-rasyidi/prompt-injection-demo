@@ -7,6 +7,7 @@ import { retrieve, docsVulnerableSystem, docsHardenedSystem, DOCS_FIXTURES, secr
 import { chat, chatMessages } from "../../../lib/llm.js";
 import { wrapUntrusted, allowlistOutput } from "../../../lib/sanitize.js";
 import { MAX_INPUT_CHARS, resolveModel } from "../../../lib/config.js";
+import { guard } from "../../../lib/guard.js";
 import { plantArticle, getPlanted, clearPlanted } from "../../../lib/store.js";
 
 export async function POST(req) {
@@ -44,6 +45,8 @@ export async function POST(req) {
 
     // ask — feed official docs + the confidential vault + this attendee's planted
     // articles to the model, then check which seeded secrets survived.
+    const g = await guard(req, id);
+    if (g) return Response.json({ ...g, blocked: 0, leaked: [], won: false, planted: await getPlanted(id), defensesOn, layers: L });
     const planted = await getPlanted(id);
     const ctx = attackContext({ planted, question, delimit: L.delimit });
     if (L.cap && ctx.length > MAX_INPUT_CHARS) {
@@ -99,6 +102,11 @@ export async function POST(req) {
   const system = L.hierarchy ? docsHardenedSystem(context) : docsVulnerableSystem(context);
   const user = `Question: ${question}`;
   const model = resolveModel(body.model);
+
+  if (!demo) {
+    const g = await guard(req, null);
+    if (g) return Response.json({ ...g, blocked: 0, docs: docs.map(meta), poisoned, poison, leaked: false, defensesOn, layers: L });
+  }
 
   try {
     let reply;

@@ -18,9 +18,11 @@ const PIXEL = Buffer.from(
 );
 
 export async function GET(req) {
-  const data = new URL(req.url).searchParams.get("d");
-  if (data) {
-    await pushCapture(data);
+  const q = new URL(req.url).searchParams;
+  const data = q.get("d");
+  const sid = (q.get("s") || "").replace(/[^a-z0-9]/gi, "").slice(0, 32);
+  if (data && sid) {
+    await pushCapture(sid, data);
     console.log("🚨 EXFILTRATION CAPTURED:", data.slice(0, 300));
   }
   return new Response(PIXEL, {

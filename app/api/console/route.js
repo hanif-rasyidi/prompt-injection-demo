@@ -5,6 +5,7 @@ import { hardenedSystem, vulnerableSystem } from "../../../lib/prompts.js";
 import { sensitiveContext } from "../../../lib/secrets.js";
 import { chat } from "../../../lib/llm.js";
 import { wrapUntrusted, allowlistOutput } from "../../../lib/sanitize.js";
+import { guard } from "../../../lib/guard.js";
 import { MAX_INPUT_CHARS, resolveModel } from "../../../lib/config.js";
 import { FIXTURES } from "../../../lib/fixtures.js";
 import { ticketLeaks, badgeFired } from "../../../lib/samples.js";
@@ -12,7 +13,10 @@ import { ticketLeaks, badgeFired } from "../../../lib/samples.js";
 export async function POST(req) {
   const origin = new URL(req.url).origin;
   const body = await req.json();
-  const source = body.source ?? ""; // the RAW ticket source (with hidden payload)
+  const id = String(body.id ?? "").replace(/[^a-z0-9]/gi, "").slice(0, 32);
+  // Tag every collector URL with the student id so captures stay private to them.
+  const tag = (t) => (id ? t.replaceAll("/api/badge?d=", `/api/badge?s=${id}&d=`) : t);
+  const source = tag(String(body.source ?? "")); // the RAW ticket source (with hidden payload)
   const demo = body.demo === true;
   const defensesOn = body.defenses === "on";
 
@@ -49,8 +53,10 @@ export async function POST(req) {
       if (body.poisoned === false) reply = body.benignSummary || FIXTURES.benign; // benign ticket → clean, ticket-specific summary
       else if (!defensesOn) reply = FIXTURES.vulnLeak; // vulnerable app leaks
       else reply = body.model === "weak" || !L.hierarchy ? FIXTURES.weakLeak : FIXTURES.refusalRobust;
-      reply = reply.replaceAll("COLLECT_ORIGIN", origin);
+      reply = tag(reply.replaceAll("COLLECT_ORIGIN", origin));
     } else {
+      const g = await guard(req, id);
+      if (g) return Response.json({ ...g, blocked: 0, leaked: [], fired: false, layers: L, defensesOn });
       reply = await chat(system, user, model);
     }
 

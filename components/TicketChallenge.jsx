@@ -3,7 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import AttackerLog from "./AttackerLog.jsx";
-import { markCracked } from "../lib/progress.js";
+import { markCracked, studentId } from "../lib/progress.js";
 import { CONSOLE_HINTS, CONSOLE_STARTER, CONSOLE_EXAMPLES } from "../lib/samples.js";
 
 const layerLabels = { delimit: "L1 delimit", hierarchy: "L2 hierarchy", allowlist: "L3 allowlist", cap: "L4 cap" };
@@ -30,6 +30,7 @@ export default function TicketChallenge() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source: withOrigin(body),
+          id: studentId(),
           defenses: defensesOn ? "on" : "off",
           layers: defensesOn ? layers : undefined,
           model: defensesOn ? model : undefined,

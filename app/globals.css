@@ -162,3 +162,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 .switch input:checked + .track { background: #14532d; }
 .switch input:checked + .track::after { left: 20px; }
+
+.start-btn {
+  background: var(--accent); color: white; border-radius: 8px;
+  padding: 10px 18px; font-size: 15px; font-weight: 600; text-decoration: none;
+}

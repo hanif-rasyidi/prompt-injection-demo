@@ -6,7 +6,7 @@ import { KB, secretLeaked, stripComments } from "../lib/docs.js";
 import KbArticle, { SourceBadge } from "./KbArticle.jsx";
 import DocsChallenge from "./DocsChallenge.jsx";
 
-// Prepared questions the presenter can fire. The third matches no article on
+// Prepared questions you can try. The third matches no article on
 // purpose — it shows the honest "no information" path (retrieval returns nothing).
 const SUGGESTED = [
   "How do I reset my API key?",
@@ -15,8 +15,8 @@ const SUGGESTED = [
 ];
 
 const LAYER_INFO = {
-  delimit: { label: "L1 delimit", on: "Wraps each community article as <untrusted_ticket> data so the model can tell content from commands.", off: "Retrieved text blends straight into the prompt — data and instructions look the same." },
-  hierarchy: { label: "L2 hierarchy", on: "System policy outranks articles and forbids revealing CONFIDENTIAL contents — this is what holds the key.", off: "The bot is told to follow any guidance it finds inside the articles." },
+  delimit: { label: "L1 delimit", on: "Wraps each community article as <untrusted_ticket> data so the model can tell content from commands.", off: "Retrieved text blends straight into the prompt, data and instructions look the same." },
+  hierarchy: { label: "L2 hierarchy", on: "System policy outranks articles and forbids revealing CONFIDENTIAL contents, this is what holds the key.", off: "The bot is told to follow any guidance it finds inside the articles." },
   allowlist: { label: "L3 allowlist", on: "Strips any link/image whose host isn't acme-saas.example.com from the answer.", off: "Links and auto-loading images pass through untouched." },
   cap: { label: "L4 cap", on: "Rejects retrieved context over 6000 chars (attacker-inflated docs).", off: "No size cap on retrieved context." },
 };
@@ -43,7 +43,7 @@ export default function DocsScenario() {
   const [defensesOn, setDefensesOn] = useState(false);
   const [layers, setLayers] = useState({ delimit: true, hierarchy: true, allowlist: true, cap: true });
   const [model, setModel] = useState("robust");
-  const [demo, setDemo] = useState(false); // LIVE by default on stage
+  const [demo, setDemo] = useState(false); // live model by default
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState(null);
   const [mode, setMode] = useState("demo");
@@ -84,15 +84,15 @@ export default function DocsScenario() {
       </div>
 
       <div className="modetabs">
-        <button onClick={() => setMode("demo")} style={{ background: mode === "demo" ? "" : "#2a2f3d" }}>🎭 Guided demo</button>
-        <button onClick={() => setMode("attack")} style={{ background: mode === "attack" ? "" : "#2a2f3d" }}>🎯 Your turn — attack it</button>
+        <button onClick={() => setMode("demo")} style={{ background: mode === "demo" ? "" : "#2a2f3d" }}>🧭 Guided walkthrough</button>
+        <button onClick={() => setMode("attack")} style={{ background: mode === "attack" ? "" : "#2a2f3d" }}>🎯 Your turn, attack it</button>
       </div>
 
       {mode === "attack" ? (
         <>
           <p className="muted">
-            Now <b>you're</b> the attacker — but you never talk to the bot. Plant poisoned wiki articles the
-            assistant will retrieve, then let it answer someone's innocent question. Steal the vault — then
+            Now <b>you're</b> the attacker, but you never talk to the bot. Plant poisoned wiki articles the
+            assistant will retrieve, then let it answer someone's innocent question. Steal the vault, then
             flip defenses on and watch them stop you.
           </p>
           <DocsChallenge />
@@ -101,19 +101,24 @@ export default function DocsScenario() {
       <>
       <p className="muted">
         Acme's assistant answers support questions by retrieving articles from its knowledge base. Below is
-        that knowledge base. Toggle the <b>poisoned community article</b> on and off and ask the same
-        question — watch one extra document turn the assistant against the user.
+        that knowledge base. Follow the steps and watch one extra document turn the assistant against the user.
       </p>
+      <ol className="muted" style={{ fontSize: 13, lineHeight: 1.7, paddingLeft: 20 }}>
+        <li>Press <b>Ask</b> with the poisoned article OFF. This is the normal answer.</li>
+        <li>Switch the poisoned article ON and press <b>Ask</b> again. Compare the two answers.</li>
+        <li>Switch Defenses ON and ask once more. The leak should stop, and the layers panel shows why.</li>
+        <li>Ready? Open <b>Your turn</b> and write your own poisoned article.</li>
+      </ol>
 
-      {/* THE RAG — always visible, so the room knows what the assistant can read */}
+      {/* THE RAG — always visible, so you can see what the assistant can read */}
       <div className="panel" style={{ marginBottom: 14 }}>
-        <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>📚 Acme knowledge base — every article the retriever can pull in</div>
+        <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>📚 Acme knowledge base, every article the retriever can pull in</div>
         {guidedKb.map((d) => (
           <div key={d.id} style={{ opacity: d.poisoned && !poison ? 0.45 : 1 }}>
             <KbArticle d={d} />
             {d.poisoned && (
               <div className="muted" style={{ fontSize: 12, marginTop: -4, marginBottom: 6 }}>
-                {poison ? "🧪 In play — the retriever can pull this in." : "🚫 Removed from the KB for this run (original flow)."}
+                {poison ? "🧪 In play, the retriever can pull this in." : "🚫 Removed from the KB for this run (original flow)."}
               </div>
             )}
           </div>
@@ -160,14 +165,14 @@ export default function DocsScenario() {
                 <label>Model:{" "}
                   <select value={model} onChange={(e) => setModel(e.target.value)}
                     style={{ background: "#0c0e14", color: "var(--text)", border: "1px solid var(--border)", borderRadius: 6, padding: "3px 8px" }}>
-                    <option value="robust">robust — resists</option>
-                    <option value="weak">weak — follows injection</option>
+                    <option value="robust">robust, resists</option>
+                    <option value="weak">weak, follows injection</option>
                   </select>
                 </label>
               </div>
             )}
             <label className="muted" style={{ cursor: "pointer", fontSize: 13 }}>
-              <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Deterministic (no API — reliable replay)
+              <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Deterministic (no API, reliable replay)
             </label>
           </div>
 
@@ -179,9 +184,9 @@ export default function DocsScenario() {
                 <>
                   <div style={{ marginBottom: 8 }}>
                     <span className="tag" style={{ marginRight: 6 }}>{res.poison ? "🧪 poisoned flow" : "✅ original flow"}</span>
-                    {res.nomatch && <span className="tag">🔍 No matching articles — assistant declined</span>}
-                    {leaked && <span className="tag danger">🚨 Data exfiltrated — confidential key leaked to the user</span>}
-                    {!leaked && !res.nomatch && res.poisoned && defensesOn && <span className="tag ok">🛡 Injection ignored — key held</span>}
+                    {res.nomatch && <span className="tag">🔍 No matching articles, assistant declined</span>}
+                    {leaked && <span className="tag danger">🚨 Data exfiltrated, confidential key leaked to the user</span>}
+                    {!leaked && !res.nomatch && res.poisoned && defensesOn && <span className="tag ok">🛡 Injection ignored, key held</span>}
                     {res.blocked > 0 && <span className="tag ok" style={{ marginLeft: 6 }}>🛡 L3 stripped {res.blocked} link(s)</span>}
                   </div>
                   <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>🤖 Docs Assistant answer:</div>
@@ -199,7 +204,7 @@ export default function DocsScenario() {
               <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>🩸 What just got stolen</div>
               <div style={{ fontSize: 13, marginBottom: 8 }}>
                 A stranger asking a routine support question just received Acme's internal recovery key. It exists
-                <b> only</b> in the confidential runbook above — the poisoned community article dragged it into the answer.
+                <b> only</b> in the confidential runbook above, the poisoned community article dragged it into the answer.
               </div>
               <div className="raw" style={{ color: "var(--danger)", fontWeight: 700 }}>{res.secret}</div>
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{res.confidentialLabel}</div>
@@ -210,7 +215,7 @@ export default function DocsScenario() {
           {res && !res.error && (
             <div className="panel">
               <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
-                🛡 Defense layers {defensesOn ? "(active this run)" : "(all OFF — flip Defenses ON to engage)"}
+                🛡 Defense layers {defensesOn ? "(active this run)" : "(all OFF, flip Defenses ON to engage)"}
               </div>
               <LayerRows layers={effLayers} />
             </div>
@@ -223,7 +228,7 @@ export default function DocsScenario() {
           {!res || res.error ? (
             <div className="muted">Ask a question to see what the retriever pulled in.</div>
           ) : res.docs.length === 0 ? (
-            <div className="muted">No articles matched — the assistant has nothing to answer from, so it declines. Nothing to exploit here.</div>
+            <div className="muted">No articles matched, the assistant has nothing to answer from, so it declines. Nothing to exploit here.</div>
           ) : (
             res.docs.map((d) => {
               const full = KB.find((x) => x.id === d.id);

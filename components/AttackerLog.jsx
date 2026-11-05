@@ -5,7 +5,7 @@ import { studentId } from "../lib/progress.js";
 
 // The attacker's live capture panel. Polls the collector every 1.5s so the
 // stolen data appears on screen the instant the victim's browser auto-loads
-// the exfiltration image. Designed to sit beside the console (split-screen).
+// the exfiltration image. Sits beside the console on wide screens, below it on phones.
 export default function AttackerLog() {
   const [captures, setCaptures] = useState([]);
 

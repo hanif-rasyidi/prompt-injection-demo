@@ -67,26 +67,31 @@ export default function ConsoleScenario() {
       </div>
 
       <div className="modetabs">
-        <button onClick={() => setMode("demo")} style={{ background: mode === "demo" ? "" : "#2a2f3d" }}>🎭 Guided demo</button>
-        <button onClick={() => setMode("attack")} style={{ background: mode === "attack" ? "" : "#2a2f3d" }}>🎯 Your turn — attack it</button>
+        <button onClick={() => setMode("demo")} style={{ background: mode === "demo" ? "" : "#2a2f3d" }}>🧭 Walkthrough</button>
+        <button onClick={() => setMode("attack")} style={{ background: mode === "attack" ? "" : "#2a2f3d" }}>🎯 Your turn: attack it</button>
       </div>
 
       {mode === "attack" ? (
         <>
           <p className="muted">
             Now <b>you</b> write the malicious ticket. Same automation the auto-triage (④) runs on every
-            inbound mail — make the AI summarizer leak Acme's secrets to your collector. Then flip defenses
+            inbound mail. Make the AI summarizer leak Acme's secrets to your collector, then flip defenses
             on and watch Layer 3 shut the door.
           </p>
           <TicketChallenge />
         </>
       ) : (
       <>
-      <p className="muted">
-        An agent triages incoming tickets. They read the <b>rendered</b> email and click “Approve &amp;
-        summarize”. But the AI reads the <b>raw source</b> — where an attacker hid instructions the
-        agent never sees.
-      </p>
+      <div className="panel" style={{ marginBottom: 14 }}>
+        <b>Follow along on your own (about 3 minutes)</b>
+        <ol className="muted" style={{ fontSize: 13, paddingLeft: 20, lineHeight: 1.7, margin: "6px 0 0" }}>
+          <li>A support agent reads the <b>rendered</b> email and clicks Approve &amp; summarize, but the AI reads the <b>raw source</b>. The first ticket in the inbox (“URGENT: locked out…”) is already selected; look at it on the Rendered tab. It looks harmless.</li>
+          <li>Switch to the <b>Raw source</b> tab. The red block is a hidden instruction the agent never saw.</li>
+          <li>With Defenses OFF, press <b>Approve &amp; summarize</b>. Watch the attacker capture log fill with stolen data.</li>
+          <li>Turn Defenses ON and summarize the same ticket again. Layer 3 neutralises the exfiltration URL.</li>
+          <li>When you have seen both, press <b>Your turn: attack it</b> above and write your own.</li>
+        </ol>
+      </div>
 
       <div className="grid2">
         {/* LEFT: inbox + ticket + controls + AI reply */}
@@ -114,7 +119,7 @@ export default function ConsoleScenario() {
           <div className="panel" style={{ marginBottom: 14 }}>
             <div className="tabs">
               <div className={`tab ${tab === "rendered" ? "active" : ""}`} onClick={() => setTab("rendered")}>
-                📧 Rendered (what the agent sees)
+                📧 Rendered (what the human sees)
               </div>
               <div className={`tab ${tab === "raw" ? "active" : ""}`} onClick={() => setTab("raw")}>
                 &lt;/&gt; Raw source (what the AI reads)
@@ -134,7 +139,7 @@ export default function ConsoleScenario() {
             )}
             {tab === "raw" && ticket.poisoned && (
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                ↑ The red block is invisible in the rendered view. The agent approved a ticket they
+                ↑ The red block is invisible in the rendered view. The reviewer approved a ticket they
                 could not see the danger in.
               </div>
             )}
@@ -161,8 +166,8 @@ export default function ConsoleScenario() {
                   Model:{" "}
                   <select value={model} onChange={(e) => setModel(e.target.value)}
                     style={{ background: "#0c0e14", color: "var(--text)", border: "1px solid var(--border)", borderRadius: 6, padding: "3px 8px" }}>
-                    <option value="robust">robust (Qwen) — resists</option>
-                    <option value="weak">weak (nemotron) — follows injection</option>
+                    <option value="robust">robust (Qwen): resists</option>
+                    <option value="weak">weak (nemotron): follows injection</option>
                   </select>
                 </label>
               </div>
@@ -173,7 +178,7 @@ export default function ConsoleScenario() {
                 {loading ? "Summarizing…" : "✅ Approve & summarize with AI"}
               </button>
               <label className="muted" style={{ cursor: "pointer", fontSize: 13 }}>
-                <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Deterministic (no API)
+                <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Offline demo mode (no AI call)
               </label>
             </div>
           </div>
@@ -182,7 +187,7 @@ export default function ConsoleScenario() {
           {error && <div className="panel" style={{ color: "var(--danger)", marginBottom: 14 }}>⚠ {error}</div>}
           {(reply || blocked > 0) && (
             <div className="panel">
-              <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>🤖 AI summary (rendered markdown — images auto-load):</div>
+              <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>🤖 AI summary (rendered markdown, images auto-load):</div>
               {blocked > 0 && <div className="tag ok" style={{ marginBottom: 8 }}>🛡 Layer 3 neutralised {blocked} exfiltration URL(s)</div>}
               <div className="email" style={{ background: "#0c0e14", color: "var(--text)" }}>
                 <ReactMarkdown>{reply}</ReactMarkdown>

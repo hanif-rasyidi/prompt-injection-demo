@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { studentId } from "../lib/progress.js";
 
 // The attacker's live capture panel. Polls the collector every 1.5s so the
 // stolen data appears on screen the instant the victim's browser auto-loads
@@ -12,7 +13,7 @@ export default function AttackerLog() {
     let alive = true;
     const poll = async () => {
       try {
-        const res = await fetch("/api/captures");
+        const res = await fetch(`/api/captures?s=${studentId()}`);
         const data = await res.json();
         if (alive) setCaptures(data.captures || []);
       } catch {
@@ -28,7 +29,7 @@ export default function AttackerLog() {
   }, []);
 
   async function clearLog() {
-    await fetch("/api/captures", { method: "DELETE" });
+    await fetch(`/api/captures?s=${studentId()}`, { method: "DELETE" });
     setCaptures([]);
   }
 

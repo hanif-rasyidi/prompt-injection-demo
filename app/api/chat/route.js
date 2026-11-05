@@ -4,6 +4,7 @@
 import { codeSystem, policySystem, cracked, MAX_LEVEL } from "../../../lib/ctf.js";
 import { allow } from "../../../lib/store.js";
 import { chatMessages } from "../../../lib/llm.js";
+import { guard } from "../../../lib/guard.js";
 import { studentFlag } from "../../../lib/flag.js";
 
 export async function POST(req) {
@@ -15,6 +16,9 @@ export async function POST(req) {
   // 4000 chars so L5 "instruction flooding" attacks are actually possible.
   if (message.length > 4000) return Response.json({ level, reply: "That message is too long. Keep it under 4000 characters." });
   if (!(await allow(id))) return Response.json({ level, reply: "⏳ One at a time. Wait a few seconds and try again." });
+
+  const g = await guard(req, id);
+  if (g) return Response.json({ level, ...g });
 
   const flag = studentFlag(id, level);
   try {

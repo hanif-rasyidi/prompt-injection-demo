@@ -4,6 +4,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { TICKETS } from "../lib/tickets.js";
 import { CONSOLE_HINTS, CONSOLE_STARTER } from "../lib/samples.js";
+import { studentId } from "../lib/progress.js";
 import AttackerLog from "./AttackerLog.jsx";
 
 // SCENARIO ④ — zero-click auto-triage. Same backend as the console (/api/console),
@@ -56,6 +57,7 @@ export default function OpsScenario() {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         source,
+        id: studentId(),
         poisoned: Boolean(t.poisoned),
         benignSummary: t.demoSummary,
         defenses: defensesOn ? "on" : "off",

@@ -1,34 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { TICKETS } from "../lib/tickets.js";
 import { CONSOLE_HINTS, CONSOLE_STARTER } from "../lib/samples.js";
-import { studentId } from "../lib/progress.js";
+import { studentId, markCracked } from "../lib/progress.js";
 import AttackerLog from "./AttackerLog.jsx";
+import WinCard from "./WinCard.jsx";
 
-// SCENARIO ④ — zero-click auto-triage. Same backend as the console (/api/console),
+// SCENARIO ④, zero-click auto-triage. Same backend as the console (/api/console),
 // but there is NO human "Approve" step: an automation processes every inbound
 // ticket the moment it lands. The poisoned one exfiltrates with zero clicks.
+// Self-guided: a student works through it alone, with hints and a win card.
 
 const escapeHtml = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const highlightPayload = (e) => e.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="payload">$1</span>');
 
-// The four defense layers, with a one-line "what it does" for the audience.
+// The four defense layers, with a one-line "what it does" for you.
 const LAYER_INFO = {
   delimit: ["L1 · Input delimiting", "Wrap the ticket in <untrusted> tags so the model treats it as data, not commands."],
   hierarchy: ["L2 · Instruction hierarchy", "The system prompt declares its security policy outranks anything written in a ticket."],
-  allowlist: ["L3 · Output allowlisting", "Strip any output URL/image whose host isn't allow-listed — kills the exfil even if the model was fooled."],
+  allowlist: ["L3 · Output allowlisting", "Strip any output URL/image whose host isn't allow-listed, kills the exfil even if the model was fooled."],
   cap: ["L4 · Token cap", "Reject oversized tickets that try to flood the context window."],
 };
 
-// Presenter-facing walkthrough of the whole flow.
+// Self-guided walkthrough of the whole flow.
 const STEPS = [
-  ["Read the inbound tickets", "Four support emails are queued. Expand any to read it — and flip to Raw source to see that one hides a payload the human agent never sees."],
-  ["The automation runs — no human", "Hit Run: the bot summarizes EVERY ticket the moment it arrives. There is no “Approve” button, so nobody reviews the bad one."],
-  ["One ticket exfiltrates", "The poisoned ticket's hidden instruction makes the AI append a status-badge image whose URL carries Acme's secrets. The browser auto-loads it → the attacker's log fills. Zero clicks."],
-  ["Defenses shut it down", "Turn Defenses ON: the four layers below neutralise the attack — above all L3, which strips the exfil URL from the output even when the model is fooled."],
+  ["Read the inbound tickets", "Four support emails are queued. Open each one with “read”, then switch to Raw source on the first to see a hidden payload the human agent never sees."],
+  ["Run the automation", "Press Run. The bot summarises every ticket the moment it arrives. There is no “Approve” button, so nobody reviews the bad one."],
+  ["Watch it leak", "The hidden instruction makes the AI add a status-badge image whose URL carries Acme's secrets. The browser loads it by itself and the attacker log fills. Zero clicks."],
+  ["Turn Defenses ON and run again", "The four layers neutralise the attack, above all L3, which strips the exfil URL from the output even when the model is fooled."],
+  ["Your turn", "Write your own poisoned ticket in the box below (use the hints if you get stuck), add it to the queue and run it against the live model."],
 ];
+const SOLVED_KEY = "lab:ops:solved";
+const SOLVED_LABEL = { clean: "solved clean", hint: "solved with a hint", answer: "solved with the answer" };
 
 export default function OpsScenario() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -40,10 +45,19 @@ export default function OpsScenario() {
   const [results, setResults] = useState([]); // {id, reply, blocked, leaked, error}
   const [expanded, setExpanded] = useState({});
   const [rawView, setRawView] = useState({});
-  // ── Attendee's own planted ticket (the hands-on) ──
-  const [yourSource, setYourSource] = useState(""); // raw ticket source they type
+  // ── Your own planted ticket (the hands-on) ──
+  const [yourSource, setYourSource] = useState(""); // raw ticket source you type
   const [yourTicket, setYourTicket] = useState(null); // the synthetic ticket, once added to the queue
   const [hintStep, setHintStep] = useState(0);
+  const [usedAnswer, setUsedAnswer] = useState(false);
+  const [won, setWon] = useState(null); // {secrets} after a leak with Defenses OFF
+  const [held, setHeld] = useState(false); // replay with Defenses ON leaked nothing
+  const [solved, setSolved] = useState("");
+  useEffect(() => {
+    try { setSolved(localStorage.getItem(SOLVED_KEY) || ""); } catch {}
+  }, []);
+  const HINTS = CONSOLE_HINTS.slice(0, 2);
+  const origSrc = TICKETS[0].bodyHtml.replaceAll("COLLECT_ORIGIN", origin);
 
   function addToQueue() {
     const body = yourSource.trim();
@@ -51,7 +65,7 @@ export default function OpsScenario() {
     setYourTicket({ id: "YOUR-TK", from: "you", email: "you@attacker.example", subject: "(your ticket)", receivedAt: "just now", poisoned: true, bodyHtml: body });
   }
 
-  async function processOne(t) {
+  async function processOne(t, on) {
     const source = t.bodyHtml.replaceAll("COLLECT_ORIGIN", origin);
     const res = await fetch("/api/console", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -60,31 +74,43 @@ export default function OpsScenario() {
         id: studentId(),
         poisoned: Boolean(t.poisoned),
         benignSummary: t.demoSummary,
-        defenses: defensesOn ? "on" : "off",
-        layers: defensesOn ? layers : undefined,
-        model: defensesOn ? model : undefined,
-        demo,
+        defenses: on ? "on" : "off",
+        layers: on ? layers : undefined,
+        model: on ? model : undefined,
+        demo: t.id === "YOUR-TK" ? false : demo, // your own ticket always hits the live model
       }),
     });
     const d = await res.json();
     const reply = d.reply || "";
     const leaked = (d.leaked || []).length > 0; // a REAL secret survived L3 into the reply
-    return { id: t.id, reply, blocked: d.blocked || 0, leaked, fired: d.fired, secrets: d.leaked, error: d.error };
+    return { id: t.id, reply, blocked: d.blocked || 0, leaked, fired: d.fired, secrets: d.leaked || [], error: d.error };
   }
 
-  async function runAuto() {
-    setRunning(true); setResults([]);
+  async function runAuto(on = defensesOn) {
+    setRunning(true); setResults([]); setHeld(false);
     const out = [];
-    const queue = yourTicket ? [...TICKETS, yourTicket] : TICKETS; // seed tickets + the attendee's planted one
+    const queue = yourTicket ? [...TICKETS, yourTicket] : TICKETS; // seed tickets + your planted one
     for (const t of queue) {
       // eslint-disable-next-line no-await-in-loop
-      out.push(await processOne(t));
+      out.push(await processOne(t, on));
       setResults([...out]);
       // eslint-disable-next-line no-await-in-loop
       await new Promise((z) => setTimeout(z, 500)); // feel of a pipeline ticking through
     }
     setRunning(false);
+    const leaks = out.filter((r) => r.leaked && !r.error);
+    if (!on && leaks.length) {
+      markCracked("ops");
+      setWon({ secrets: [...new Set(leaks.flatMap((r) => r.secrets).map((x) => x.label))] });
+      if (leaks.some((r) => r.id === "YOUR-TK")) {
+        const how = usedAnswer ? "answer" : hintStep > 0 ? "hint" : "clean";
+        setSolved(how);
+        try { localStorage.setItem(SOLVED_KEY, how); } catch {}
+      }
+    } else if (on && !leaks.length && out.length) setHeld(true);
   }
+
+  function flipAndReplay() { setDefensesOn(true); runAuto(true); }
 
   return (
     <div className="container">
@@ -92,15 +118,16 @@ export default function OpsScenario() {
         <h1 style={{ margin: 0 }}>④ Auto-Triage Automation</h1>
         <span className={`tag ${defensesOn ? "ok" : "danger"}`}>{defensesOn ? "HARDENED" : "VULNERABLE"}</span>
         <span className="tag danger">ZERO-CLICK</span>
+        <span className={`tag ${demo ? "" : "ok"}`}>{demo ? "Mode: deterministic (no live model)" : "Mode: live model"}</span>
       </div>
       <p className="muted">
         No human reviews anything. An automation summarizes <b>every inbound ticket the moment it
-        arrives</b> — there's no “Approve” button to catch the bad one.
+        arrives</b>, there's no “Approve” button to catch the bad one.
       </p>
 
-      {/* presenter walkthrough of the whole flow */}
+      {/* self-guided walkthrough of the whole flow */}
       <div className="panel" style={{ marginBottom: 14 }}>
-        <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>🎬 How this works — the whole flow</div>
+        <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>🎬 How to work through this</div>
         <div style={{ display: "grid", gap: 10 }}>
           {STEPS.map(([title, desc], i) => (
             <div key={i} style={{ display: "flex", gap: 10 }}>
@@ -138,55 +165,74 @@ export default function OpsScenario() {
                   Model:{" "}
                   <select value={model} onChange={(e) => setModel(e.target.value)}
                     style={{ background: "#0c0e14", color: "var(--text)", border: "1px solid var(--border)", borderRadius: 6, padding: "3px 8px" }}>
-                    <option value="robust">robust — resists</option>
-                    <option value="weak">weak — follows injection</option>
+                    <option value="robust">robust, resists</option>
+                    <option value="weak">weak, follows injection</option>
                   </select>
                 </label>
               </div>
             ) : (
               <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
-                All four layers off — the raw ticket goes straight to the model and its output ships unfiltered.
+                All four layers off, the raw ticket goes straight to the model and its output ships unfiltered.
               </div>
             )}
 
             <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-              <button onClick={runAuto} disabled={running}>{running ? "Auto-triaging…" : "▶ Run the automation"}</button>
+              <button onClick={() => runAuto()} disabled={running}>{running ? "Auto-triaging…" : "▶ Run the automation"}</button>
               <label className="muted" style={{ cursor: "pointer", fontSize: 13 }}>
                 <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Deterministic (no API)
               </label>
             </div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+              {demo ? "The four seed tickets use canned answers, so the guided run works offline. Your own ticket always calls the live model." : "Every ticket goes to the live model, so results can vary between runs."}
+            </div>
           </div>
 
-          {/* attendee's hands-on — plant your own ticket into the pipeline */}
+          {won && (
+            <div style={{ marginBottom: 14 }}>
+              <WinCard
+                title={`Zero-click leak! ${won.secrets.length} secret${won.secrets.length === 1 ? "" : "s"} left without anyone clicking`}
+                secrets={won.secrets}
+                why="There was no human in the loop. The automation read the hidden instruction and its output auto-loaded the collector image."
+                stops="L1 input delimiting plus L3 output allowlist."
+                defensesOn={defensesOn}
+                onFlip={flipAndReplay}
+              />
+            </div>
+          )}
+          {held && <div className="cracked-banner" role="status" style={{ marginBottom: 14 }}>🛡 Defenses held. That is the fix.</div>}
+
+          {/* your own ticket, plant your own ticket into the pipeline */}
           <div className="panel" style={{ marginBottom: 14, borderColor: "var(--danger)" }}>
-            <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>🎯 Your turn — drop your own ticket into the pipeline</div>
+            <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>🎯 Your turn: drop your own ticket into the pipeline</div>
             <div className="muted" style={{ fontSize: 13, marginBottom: 10 }}>
-              No human reviews this queue. Write a malicious ticket, add it to the inbound queue, then hit
-              <b> ▶ Run the automation</b> — and watch <b>your</b> ticket exfiltrate with zero clicks.
+              No human reviews this queue. Write a malicious ticket, add it to the inbound queue, then press
+              <b> ▶ Run the automation</b> with Defenses OFF and watch <b>your</b> ticket exfiltrate with zero clicks. This one runs on the live model.
             </div>
             <textarea value={yourSource} onChange={(e) => setYourSource(e.target.value)} rows={7}
-              placeholder="Paste the raw ticket source here — hide your instruction where the human agent won't see it (e.g. an HTML comment)."
+              placeholder="Paste the raw ticket source here, hide your instruction where the human agent won't see it (e.g. an HTML comment)."
               style={{ width: "100%", marginBottom: 10, fontFamily: "inherit" }} />
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <button onClick={addToQueue} disabled={!yourSource.trim()}>➕ Add to queue</button>
               <button onClick={() => setYourSource(CONSOLE_STARTER.replaceAll("COLLECT_ORIGIN", origin))}
                 style={{ background: "#2a2f3d" }}>🧩 Starter</button>
-              <button onClick={() => setHintStep((s) => Math.min(s + 1, CONSOLE_HINTS.length))} disabled={hintStep >= CONSOLE_HINTS.length}
-                style={{ background: "#2a2f3d" }}>
-                💡 {hintStep === 0 ? "Hint" : hintStep < CONSOLE_HINTS.length ? `Next hint (${hintStep}/${CONSOLE_HINTS.length})` : "All hints shown"}
-              </button>
+              {hintStep < HINTS.length ? (
+                <button onClick={() => setHintStep((s) => s + 1)} style={{ background: "#2a2f3d" }}>💡 Hint {hintStep + 1}</button>
+              ) : (
+                <button onClick={() => { setYourSource(origSrc); setUsedAnswer(true); }} style={{ background: "#2a2f3d" }}>🔑 Show answer</button>
+              )}
               {yourTicket && <span className="tag danger">in queue as YOUR-TK</span>}
             </div>
+            {solved && <div className="tag ok" style={{ marginTop: 10 }}>Your ticket: {SOLVED_LABEL[solved]}</div>}
             {hintStep > 0 && (
               <ol className="muted" style={{ fontSize: 13, marginTop: 10, paddingLeft: 20, lineHeight: 1.6, borderLeft: "2px solid var(--border)" }}>
-                {CONSOLE_HINTS.slice(0, hintStep).map((h, i) => <li key={i}>{h}</li>)}
+                {HINTS.slice(0, hintStep).map((h, i) => <li key={i}>{h}</li>)}
               </ol>
             )}
           </div>
 
-          {/* inbound queue — readable BEFORE running, summarized after */}
+          {/* inbound queue, readable BEFORE running, summarized after */}
           <div className="panel">
-            <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>📥 Inbound queue — read them first, then run (no human review happens)</div>
+            <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>📥 Inbound queue, read them first, then run (no human review happens)</div>
             {(yourTicket ? [...TICKETS, yourTicket] : TICKETS).map((t) => {
               const mine = t.id === "YOUR-TK";
               const r = results.find((x) => x.id === t.id);
@@ -197,7 +243,7 @@ export default function OpsScenario() {
                 ? (running ? <span className="muted">…</span> : <span className="muted">queued</span>)
                 : r.error ? <span className="tag danger">error</span>
                 : r.leaked ? <span className="tag danger">🚨 exfiltrated</span>
-                : r.fired ? <span className="muted" style={{ fontSize: 11 }}>⚠ placeholder — no real secret</span>
+                : r.fired ? <span className="muted" style={{ fontSize: 11 }}>⚠ placeholder, no real secret</span>
                 : r.blocked > 0 ? <span className="tag ok">🛡 blocked</span>
                 : <span className="tag ok">✓ summarized</span>;
               return (
@@ -229,7 +275,7 @@ export default function OpsScenario() {
                       )}
                       {raw && t.poisoned && (
                         <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                          ↑ The red block is a hidden HTML comment — invisible in the rendered view, but the AI
+                          ↑ The red block is a hidden HTML comment, invisible in the rendered view, but the AI
                           reads it as an instruction. This is the poisoned ticket.
                         </div>
                       )}
@@ -256,9 +302,9 @@ export default function OpsScenario() {
       <div className="panel" style={{ marginTop: 14 }}>
         <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>📚 References</div>
         <ul className="muted" style={{ fontSize: 13, margin: 0, paddingLeft: 20, lineHeight: 1.7 }}>
-          <li><b>OWASP LLM01: Prompt Injection</b> — untrusted content in the model's context is treated as instructions.</li>
-          <li><b>Zero-click / automated-agent injection</b> — an autonomous agent processes attacker input with no human in the loop, so the payload fires unreviewed.</li>
-          <li><b>EchoLeak (CVE-2025-32711)</b> — real-world zero-click exfiltration: a poisoned email made an AI assistant leak data via an auto-loaded image URL.</li>
+          <li><b>OWASP LLM01: Prompt Injection</b>, untrusted content in the model's context is treated as instructions.</li>
+          <li><b>Zero-click / automated-agent injection</b>, an autonomous agent processes attacker input with no human in the loop, so the payload fires unreviewed.</li>
+          <li><b>EchoLeak (CVE-2025-32711)</b>, real-world zero-click exfiltration: a poisoned email made an AI assistant leak data via an auto-loaded image URL.</li>
         </ul>
       </div>
     </div>

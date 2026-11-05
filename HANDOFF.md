@@ -8,24 +8,14 @@ surfaces, each a prompt-injection class (OWASP LLM01). Students attack from thei
 browser, then flip Defenses ON and watch the same attack die. Everything is
 synthetic (fake tokens acme_live_*, example.com, no real secrets).
 
-## FIRST TASK: browser-verify scenario ② (just finished, not yet eyeballed)
+## Status (2026-11-05)
 
-1. Start the app:  cd to repo, `npm start`  (serves the production build on
-   http://localhost:3000). If a code change is pending, `npm run build` first.
-2. Load the Chrome browser tools, then verify and report with
-   screenshots:
+No open task. ② /docs Your turn was browser-checked: Hint 1, Hint 2, Show
+answer, Plant, Ask with Defenses OFF leaks the master recovery key, Defenses ON
+holds. ③ already has the hint ladder, starter and WinCard. Not yet run against
+the live model today: `npm run preflight`.
 
-   http://localhost:3000/docs → "🎯 Your turn — attack it" tab:
-   - Arc strip shows: 1 Watch demo · 2 Your turn · 3 Watch it solved
-   - 💡 Hint button reveals hints one at a time (3 total, cumulative)
-   - 🧩 Starter template loads a skeleton article into the body box
-   - 🗝️ "Stuck? Working exploits" reveals 2 loadable exploits (Verification
-     footer, Audit record). Maintenance echo must NOT appear here (reserved).
-   - Load one, Defenses OFF, Submit & ask → 🚩 Cracked banner + a KB-WORD-####
-     key in the answer.
-   - Flip Defenses ON, resubmit same → key held, injection ignored.
-
-Report anything visually broken; fix, rebuild, re-verify, then commit + push.
+Run locally: `npm run build`, then `npm start` (http://localhost:3000).
 
 ## Verification tooling
 - `npm run preflight` — hits the LIVE ② attack paths, asserts all exploits leak
@@ -101,13 +91,6 @@ stage demos.
 Exfil endpoint: /api/badge (named to dodge ad-blockers). Captures viewable in
 AttackerLog / GET /api/captures; DELETE clears.
 
-## Likely NEXT work after ② is signed off
-Give ③ /console the same attendee treatment as ②: arc strip (watch→try→solve),
-graduated hint ladder, starter template, multiple loadable exploits with one
-reserved. Mirror the lib/docs.js + DocsChallenge.jsx pattern
-into lib/samples.js + TicketChallenge.jsx. Keep a preflight check for it too.
-
 ## Working conventions
-Ponytail (lazy/minimal) + Caveman (terse) modes are active via plugins.
-Commit style: conventional commits, Co-Authored-By trailer. Commit + push to
-main only after browser + build verification passes.
+Commit after browser + build verification passes. Push to main deploys to
+Vercel, so push only when Hanif says so. No AI attribution lines in commits.

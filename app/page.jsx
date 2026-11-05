@@ -18,7 +18,7 @@ export default function Home() {
         background: "linear-gradient(135deg,#141a2e,#1a1d27)",
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-          <h2 style={{ margin: 0 }}>🛡 From Attack to Defense — the takeaways</h2>
+          <h2 style={{ margin: 0 }}>🛡 From Attack to Defense: the takeaways</h2>
           <span className="tag ok">wrap-up</span>
         </div>
         <p className="muted" style={{ marginBottom: 0 }}>

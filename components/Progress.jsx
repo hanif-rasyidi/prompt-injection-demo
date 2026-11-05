@@ -28,7 +28,7 @@ export default function Progress() {
           </Link>
         ))}
       </div>
-      {n === 3 && <span className="muted" style={{ fontSize: 13 }}>You ran the full attack ladder — direct, indirect, and exfiltration. 🎉</span>}
+      {n === 3 && <span className="muted" style={{ fontSize: 13 }}>You ran the full attack ladder: direct, indirect, and exfiltration. 🎉</span>}
     </div>
   );
 }

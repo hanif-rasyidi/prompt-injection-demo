@@ -172,7 +172,7 @@ export default function DocsScenario() {
               </div>
             )}
             <label className="muted" style={{ cursor: "pointer", fontSize: 13 }}>
-              <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Deterministic (no API, reliable replay)
+              <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Replay mode (recorded answers)
             </label>
           </div>
 

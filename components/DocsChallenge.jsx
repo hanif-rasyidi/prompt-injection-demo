@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { KB, DOCS_HINTS, DOCS_STARTER, DOCS_BACKDOOR_STARTER, DOCS_EXAMPLES, SYSTEM_SECRET_LABEL } from "../lib/docs.js";
@@ -195,12 +196,14 @@ export default function DocsChallenge() {
                 stops="L1 delimit untrusted text (marks your article as data, not commands) and L2 instruction hierarchy (system policy outranks anything in an article)."
                 defensesOn={res.defensesOn}
                 onFlip={flip}
+                next={res.defensesOn ? <Link href="/console" className="start-btn">Next: ③ Console →</Link> : null}
               />
               {stoleSystem && <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>😱 You even pulled the system signing key, a secret that was never in the KB.</div>}
             </>
           ) : held ? (
             <div style={{ marginBottom: 8 }}>
               <span className="tag ok">🛡 Defenses held. That is the fix.</span>
+              <div style={{ marginTop: 8 }}><Link href="/console" className="start-btn">Next: ③ Console review bypass →</Link></div>
             </div>
           ) : dormant ? (
             <div style={{ marginBottom: 8 }}>
@@ -253,9 +256,12 @@ export default function DocsChallenge() {
         )}
         <button onClick={() => setArticle(DOCS_STARTER)} style={{ background: "#2a2f3d" }}>🧩 Starter</button>
         <button onClick={loadBackdoor} style={{ background: "#2a2f3d" }} title="The stealthy real-world RAG poisoning case: behaves normally until a secret word appears">🕳 Backdoor template (stealthy)</button>
-        <button onClick={() => setShowExploits((v) => !v)} style={{ background: "#2a2f3d" }}>
-          🗝️ {showExploits ? "Hide exploits" : "Working exploits"}
-        </button>
+        {/* The full exploit list is the answer key, so it unlocks only after Show answer or a win. */}
+        {(usedAnswer || hadWin || solved) && (
+          <button onClick={() => setShowExploits((v) => !v)} style={{ background: "#2a2f3d" }}>
+            🗝️ {showExploits ? "Hide exploits" : "All working exploits"}
+          </button>
+        )}
       </div>
 
       {hintStep > 0 && (

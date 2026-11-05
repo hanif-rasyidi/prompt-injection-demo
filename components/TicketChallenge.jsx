@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import AttackerLog from "./AttackerLog.jsx";
@@ -33,6 +34,8 @@ export default function TicketChallenge() {
 
   useEffect(() => {
     try { setSolved(localStorage.getItem(SOLVED_KEY) || ""); } catch {}
+    // The starter is set before the page knows its own address, so fill in the real collector URL now.
+    setBody((b) => b.replaceAll("COLLECT_ORIGIN", window.location.origin));
   }, []);
 
   async function submit(forceDefenses) {
@@ -85,7 +88,7 @@ export default function TicketChallenge() {
             <span className="tag">3 · Flip defenses and replay</span>
           </div>
           <div className="muted" style={{ fontSize: 13, marginBottom: 10 }}>
-            🎯 <b>Your mission:</b> the AI summarizer holds Acme's secrets (billing token, a confidential
+            🎯 <b>Your mission:</b> the AI summariser holds Acme's secrets (billing token, a confidential
             doc, customer records). Craft a ticket that makes it <b>exfiltrate</b> them, and smuggle the data
             into an image the browser auto-loads. If it fires, the <b>attacker log</b> (beside this panel, or below it on a phone) lights up.
           </div>
@@ -115,7 +118,7 @@ export default function TicketChallenge() {
           )}
 
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <button onClick={() => submit()} disabled={loading || !body.trim()}>{loading ? "Summarizing…" : "Submit ticket & summarize"}</button>
+            <button onClick={() => submit()} disabled={loading || !body.trim()}>{loading ? "Summarising…" : "Submit ticket & summarise"}</button>
             <button onClick={() => setHintStep((s) => Math.min(s + 1, CONSOLE_HINTS.length))} disabled={hintStep >= CONSOLE_HINTS.length}
               style={{ background: "#2a2f3d" }}>
               💡 {hintStep === 0 ? "Hint 1" : hintStep < CONSOLE_HINTS.length ? `Hint ${hintStep + 1}` : "All hints shown"}
@@ -163,7 +166,12 @@ export default function TicketChallenge() {
                 ) : (
                   <div style={{ marginBottom: 8 }}>
                     <span className="tag ok">🛡 Nothing left the building{defensesOn ? ", defenses held" : ". Try again"}</span>
-                    {replayHeld && <div style={{ marginTop: 6, fontWeight: 600 }}>Defenses held. That is the fix.</div>}
+                    {replayHeld && (
+                      <div style={{ marginTop: 6, fontWeight: 600 }}>
+                        Defenses held. That is the fix.
+                        <div style={{ marginTop: 8 }}><Link href="/ops" className="start-btn">Next: ④ Zero-click ops →</Link></div>
+                      </div>
+                    )}
                     {res.blocked > 0 && <span className="tag ok" style={{ marginLeft: 6 }}>L3 neutralised {res.blocked} URL(s)</span>}
                   </div>
                 )}

@@ -108,7 +108,6 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   h2 { font-size: 18px; }
   /* 16px input text stops iOS/Safari from auto-zooming on focus */
   textarea, input { font-size: 16px; }
-  .nav { padding: 8px 14px; }
 }
 
 /* ── nav ─────────────────────────────────────────────────────────── */
@@ -125,6 +124,12 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .nav-brand { font-weight: 800; color: var(--text); font-size: 16px; margin-right: 8px; }
 .nav-danger { color: var(--danger); margin-left: auto; }
 .nav-tag { font-size: 11px; opacity: 0.7; margin-right: 5px; }
+/* On phones the wrapped menu is 3 rows tall, so it scrolls away instead of covering a fifth of the screen. */
+@media (max-width: 600px) {
+  .nav { position: static; padding: 6px 10px; gap: 2px; }
+  .nav-link { padding: 5px 8px; font-size: 13px; }
+  .nav-danger { margin-left: 0; }
+}
 
 /* ── fake email / ticket card (white, like a real inbox) ─────────── */
 .email {

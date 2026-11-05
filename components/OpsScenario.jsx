@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { TICKETS } from "../lib/tickets.js";
@@ -72,6 +73,7 @@ export default function OpsScenario() {
       body: JSON.stringify({
         source,
         id: studentId(),
+        from: "ops",
         poisoned: Boolean(t.poisoned),
         benignSummary: t.demoSummary,
         defenses: on ? "on" : "off",
@@ -119,10 +121,10 @@ export default function OpsScenario() {
         <h1 style={{ margin: 0 }}>④ Auto-Triage Automation</h1>
         <span className={`tag ${defensesOn ? "ok" : "danger"}`}>{defensesOn ? "HARDENED" : "VULNERABLE"}</span>
         <span className="tag danger">ZERO-CLICK</span>
-        <span className={`tag ${demo ? "" : "ok"}`}>{demo ? "Mode: deterministic (no live model)" : "Mode: live model"}</span>
+        <span className={`tag ${demo ? "" : "ok"}`}>{demo ? "Mode: replay (recorded answers)" : "Mode: live AI"}</span>
       </div>
       <p className="muted">
-        No human reviews anything. An automation summarizes <b>every inbound ticket the moment it
+        No human reviews anything. An automation summarises <b>every inbound ticket the moment it
         arrives</b>, there's no “Approve” button to catch the bad one.
       </p>
 
@@ -180,11 +182,11 @@ export default function OpsScenario() {
             <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
               <button onClick={() => runAuto()} disabled={running}>{running ? "Auto-triaging…" : "▶ Run the automation"}</button>
               <label className="muted" style={{ cursor: "pointer", fontSize: 13 }}>
-                <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Deterministic (no API)
+                <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Replay mode (recorded answers)
               </label>
             </div>
             <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-              {demo ? "The four seed tickets use canned answers, so the guided run works offline. Your own ticket always calls the live model." : "Every ticket goes to the live model, so results can vary between runs."}
+              {demo ? "Replay mode is on: the four sample tickets show real answers the AI gave earlier, so the walkthrough always works. Your own ticket always goes to the live AI." : "Live mode: every ticket goes to the live AI, so the answers can change between runs."}
             </div>
           </div>
 
@@ -200,7 +202,12 @@ export default function OpsScenario() {
               />
             </div>
           )}
-          {held && <div className="cracked-banner" role="status" style={{ marginBottom: 14 }}>🛡 Defenses held. That is the fix.</div>}
+          {held && (
+            <div className="cracked-banner" role="status" style={{ marginBottom: 14 }}>
+              🛡 Defenses held. That is the fix.
+              <div style={{ marginTop: 8 }}><Link href="/defense" className="start-btn">Next: the takeaways →</Link></div>
+            </div>
+          )}
 
           {/* your own ticket, plant your own ticket into the pipeline */}
           <div className="panel" style={{ marginBottom: 14, borderColor: "var(--danger)" }}>
@@ -246,7 +253,7 @@ export default function OpsScenario() {
                 : r.leaked ? <span className="tag danger">🚨 exfiltrated</span>
                 : r.fired ? <span className="muted" style={{ fontSize: 11 }}>⚠ placeholder, no real secret</span>
                 : r.blocked > 0 ? <span className="tag ok">🛡 blocked</span>
-                : <span className="tag ok">✓ summarized</span>;
+                : <span className="tag ok">✓ summarised</span>;
               return (
                 <div key={t.id} style={{ borderTop: "1px solid var(--border)", padding: "10px 0", ...(mine ? { background: "#141017", borderLeft: "3px solid var(--danger)", paddingLeft: 8 } : {}) }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>

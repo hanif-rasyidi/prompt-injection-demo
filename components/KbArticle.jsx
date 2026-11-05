@@ -36,7 +36,7 @@ export default function KbArticle({ d }) {
       )}
       {view === "raw" && d.poisoned && (
         <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-          ↑ The red block is an HTML comment — invisible in Reader view, but the assistant reads it as text and (unhardened) obeys it.
+          ↑ The red block is an HTML comment. It is invisible in Reader view, but the assistant reads it as text and (unhardened) obeys it.
         </div>
       )}
       {view === "reader" && d.poisoned && (

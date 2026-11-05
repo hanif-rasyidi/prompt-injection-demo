@@ -75,7 +75,7 @@ export default function ConsoleScenario() {
         <>
           <p className="muted">
             Now <b>you</b> write the malicious ticket. Same automation the auto-triage (④) runs on every
-            inbound mail. Make the AI summarizer leak Acme's secrets to your collector, then flip defenses
+            inbound mail. Make the AI summariser leak Acme's secrets to your collector, then flip defenses
             on and watch Layer 3 shut the door.
           </p>
           <TicketChallenge />
@@ -85,10 +85,10 @@ export default function ConsoleScenario() {
       <div className="panel" style={{ marginBottom: 14 }}>
         <b>Follow along on your own (about 3 minutes)</b>
         <ol className="muted" style={{ fontSize: 13, paddingLeft: 20, lineHeight: 1.7, margin: "6px 0 0" }}>
-          <li>A support agent reads the <b>rendered</b> email and clicks Approve &amp; summarize, but the AI reads the <b>raw source</b>. The first ticket in the inbox (“URGENT: locked out…”) is already selected; look at it on the Rendered tab. It looks harmless.</li>
+          <li>A support agent reads the <b>rendered</b> email and clicks Approve &amp; summarise, but the AI reads the <b>raw source</b>. The first ticket in the inbox (“URGENT: locked out…”) is already selected; look at it on the Rendered tab. It looks harmless.</li>
           <li>Switch to the <b>Raw source</b> tab. The red block is a hidden instruction the agent never saw.</li>
-          <li>With Defenses OFF, press <b>Approve &amp; summarize</b>. Watch the attacker capture log fill with stolen data.</li>
-          <li>Turn Defenses ON and summarize the same ticket again. Layer 3 neutralises the exfiltration URL.</li>
+          <li>With Defenses OFF, press <b>Approve &amp; summarise</b>. Watch the attacker capture log fill with stolen data.</li>
+          <li>Turn Defenses ON and summarise the same ticket again. Layer 3 neutralises the exfiltration URL.</li>
           <li>When you have seen both, press <b>Your turn: attack it</b> above and write your own.</li>
         </ol>
       </div>
@@ -175,11 +175,16 @@ export default function ConsoleScenario() {
 
             <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
               <button onClick={summarize} disabled={loading}>
-                {loading ? "Summarizing…" : "✅ Approve & summarize with AI"}
+                {loading ? "Summarising…" : "✅ Approve & summarise with AI"}
               </button>
               <label className="muted" style={{ cursor: "pointer", fontSize: 13 }}>
-                <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Offline demo mode (no AI call)
+                <input type="checkbox" checked={demo} onChange={(e) => setDemo(e.target.checked)} /> Replay mode (recorded answers)
               </label>
+            </div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+              {demo
+                ? "Replay mode is on: you see a real answer the AI gave earlier, so this walkthrough always works. Untick it to send the ticket to the live AI. Your own tickets in Your turn always use the live AI."
+                : "Live mode: the ticket goes to the live AI, so the answer can change between runs."}
             </div>
           </div>
 

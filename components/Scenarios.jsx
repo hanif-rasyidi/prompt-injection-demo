@@ -23,7 +23,7 @@ export default function Scenarios() {
     const f = () => {
       const flags = {};
       for (const c of CARDS) { try { flags[c.key] = localStorage.getItem(c.key) === "1"; } catch { flags[c.key] = false; } }
-      const solved = Object.keys(read("lab:support:solved", {}) || {}).length;
+      const solved = Object.keys(read("lab:support:solved", {}) || {}).filter((k) => Number(k) <= LEVELS).length;
       setSt({ solved, level: Number(read("lab:support:level", 1)) || 1, flags });
     };
     f();
@@ -39,6 +39,16 @@ export default function Scenarios() {
     <>
       <div className="panel" style={{ marginBottom: 16 }}>
         <b style={{ fontSize: 15 }}>🏆 {n}/4 scenarios cracked</b>
+        {n === 4 ? (
+          <div style={{ marginTop: 8 }}>
+            🎉 You cracked all four. Finish with <Link href="/defense"><b>the takeaways</b></Link>: how to defend each one.
+          </div>
+        ) : (
+          <div className="muted" style={{ fontSize: 13, marginTop: 8, lineHeight: 1.6 }}>
+            How it works: do the scenarios in order, ① to ④. Each one takes about 10 to 15 minutes.
+            Stuck? Use the hints, then Show answer. There is no penalty. Your progress stays in this browser only.
+          </div>
+        )}
       </div>
       <div className="grid2 scenario-grid">
         {CARDS.map((c) => (
@@ -51,7 +61,7 @@ export default function Scenarios() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
               <span className={`tag ${done(c) ? "ok" : ""}`}>
                 {c.key === "crack:ctf"
-                  ? `${Math.min(st.solved, LEVELS)}/${LEVELS} levels cracked (L5 is a bonus)`
+                  ? `${st.solved}/${LEVELS} levels cracked (L5 is a bonus)`
                   : done(c) ? "cracked" : "not yet"}
               </span>
               <Link href={c.href} className="start-btn">{started(c) ? "Continue" : "Start"}</Link>

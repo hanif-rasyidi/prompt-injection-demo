@@ -16,7 +16,8 @@ export async function POST(req) {
   const id = String(body.id ?? "").replace(/[^a-z0-9]/gi, "").slice(0, 32);
   // Tag collector URLs in the REPLY with the student id so captures stay private. Tagging
   // the input instead changed what the model saw per student and made attacks flaky.
-  const tag = (t) => (id ? t.replaceAll("/api/badge?d=", `/api/badge?s=${id}&d=`) : t);
+  const from = body.from === "ops" ? "ops" : "console"; // labels the capture in the attacker log
+  const tag = (t) => (id ? t.replaceAll("/api/badge?d=", `/api/badge?s=${id}&f=${from}&d=`) : t);
   const source = String(body.source ?? ""); // the RAW ticket source (with hidden payload)
   const demo = body.demo === true;
   const defensesOn = body.defenses === "on";

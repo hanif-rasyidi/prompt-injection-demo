@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { LEVELS, MAX_LEVEL } from "../lib/ctf.js";
@@ -95,7 +96,7 @@ export default function Chatbot() {
       <div className="panel" style={{ marginBottom: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <b>Level</b>
-          <span className="muted" style={{ fontSize: 13 }}>{nSolved}/{MAX_LEVEL} cracked</span>
+          <span className="muted" style={{ fontSize: 13 }}>{Object.keys(solved).filter((k) => Number(k) < MAX_LEVEL).length}/{MAX_LEVEL - 1} levels cracked{solved[MAX_LEVEL] ? " + bonus L5 👑" : " (L5 is a bonus)"}</span>
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
           {Array.from({ length: MAX_LEVEL }, (_, i) => i + 1).map((n) => (
@@ -164,6 +165,14 @@ export default function Chatbot() {
             stops={meta.stops}
             next={level < MAX_LEVEL ? <button onClick={() => goLevel(level + 1)}>Next level →</button> : null}
           />
+        )}
+
+        {level === MAX_LEVEL && attempts > 0 && (
+          <div className="panel" style={{ marginBottom: 10, fontSize: 14 }}>
+            👑 Level 5 is built to hold. That is its lesson: strong prompt hardening resists almost every trick,
+            and the only sure fix is not giving the bot the secret. Keep trying if you like, or move on.
+            <div style={{ marginTop: 8 }}><Link href="/docs" className="start-btn">Next: ② Docs heist →</Link></div>
+          </div>
         )}
 
         <div style={{ height: 340, overflowY: "auto", background: "#0c0e14", border: "1px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10 }}>

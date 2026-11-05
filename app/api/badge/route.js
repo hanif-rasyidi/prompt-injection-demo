@@ -22,7 +22,7 @@ export async function GET(req) {
   const data = q.get("d");
   const sid = (q.get("s") || "").replace(/[^a-z0-9]/gi, "").slice(0, 32);
   if (data && sid) {
-    await pushCapture(sid, data);
+    await pushCapture(sid, data, (q.get("f") || "").replace(/[^a-z]/g, "").slice(0, 10));
     console.log("🚨 EXFILTRATION CAPTURED:", data.slice(0, 300));
   }
   return new Response(PIXEL, {

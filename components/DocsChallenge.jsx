@@ -5,8 +5,9 @@ import ReactMarkdown from "react-markdown";
 import { KB, DOCS_HINTS, DOCS_STARTER, DOCS_BACKDOOR_STARTER, DOCS_EXAMPLES, SYSTEM_SECRET_LABEL } from "../lib/docs.js";
 import KbArticle from "./KbArticle.jsx";
 import { markCracked } from "../lib/progress.js";
+import WinCard from "./WinCard.jsx";
 
-// Same id key as the CTF chatbot, so a participant keeps one identity across scenarios.
+// Same id key as the CTF chatbot, so a student keeps one identity across scenarios.
 function useParticipantId() {
   const [id, setId] = useState("anon");
   useEffect(() => {
@@ -34,6 +35,13 @@ export default function DocsChallenge() {
   const [res, setRes] = useState(null);
   const [hintStep, setHintStep] = useState(0);
   const [showExploits, setShowExploits] = useState(false);
+  const [usedAnswer, setUsedAnswer] = useState(false);
+  const [held, setHeld] = useState(false);
+  const [hadWin, setHadWin] = useState(false);
+  const [solved, setSolved] = useState(null);
+  useEffect(() => {
+    try { setSolved(localStorage.getItem("lab:docs:solved")); } catch {}
+  }, []);
 
   async function api(action, extra = {}) {
     const r = await fetch("/api/docs", {
@@ -65,22 +73,47 @@ export default function DocsChallenge() {
     setRes(null);
   }
 
-  async function ask() {
+  async function ask(forceDefenses) {
     if (!question.trim() || loading) return;
-    setLoading(true); setRes(null);
+    const on = forceDefenses ?? defensesOn;
+    setLoading(true); setRes(null); setHeld(false);
     try {
       const d = await api("ask", {
         question,
-        defenses: defensesOn ? "on" : "off",
-        layers: defensesOn ? layers : undefined,
-        model: defensesOn ? model : undefined,
+        defenses: on ? "on" : "off",
+        layers: on ? layers : undefined,
+        model: on ? model : undefined,
       });
       setRes(d);
       if (d.planted) setPlanted(d.planted);
-      if (d.won) markCracked("docs");
+      if (d.won) {
+        markCracked("docs");
+        if (!on) { setHadWin(true); recordSolve(); }
+      } else if (on && hadWin) setHeld(true);
     } catch (e) {
       setRes({ error: String(e) });
     } finally { setLoading(false); }
+  }
+
+  // How this was solved: "answer" beats "hint" beats "clean"; the first solve is kept unless
+  // a later one is clean.
+  function recordSolve() {
+    const how = usedAnswer ? "answer" : hintStep > 0 ? "hint" : "clean";
+    try {
+      const old = localStorage.getItem("lab:docs:solved");
+      if (!old || how === "clean") localStorage.setItem("lab:docs:solved", how);
+      setSolved(localStorage.getItem("lab:docs:solved"));
+    } catch { setSolved(how); }
+  }
+
+  function flip() {
+    setDefensesOn(true);
+    ask(true);
+  }
+
+  function showAnswer() {
+    loadExample(DOCS_EXAMPLES[0]);
+    setUsedAnswer(true);
   }
 
   function loadExample(ex) {
@@ -102,6 +135,7 @@ export default function DocsChallenge() {
   // "Dormant" = armed backdoor that this question didn't trip. Only meaningful with
   // defenses OFF; when defenses held the leak, show the defense result instead.
   const dormant = res && !res.error && !res.won && hasBackdoor && !res.defensesOn;
+  const matched = res?.won && planted.map((p) => DOCS_EXAMPLES.find((ex) => ex.title === p.title && String(p.body).trim() === ex.article.trim())).find(Boolean);
   const stoleSystem = res && res.leaked?.some((s) => s.where === "system");
   const armed = trigger.trim();
 
@@ -110,24 +144,24 @@ export default function DocsChallenge() {
     {/* Arc strip + mission (context for the whole tab) */}
     <div style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap", fontSize: 12 }}>
-        <span className="tag">1 · Watch the demo</span>
-        <span className="tag danger">2 · Your turn — you're here</span>
-        <span className="tag">3 · Watch it solved</span>
+        <span className="tag">1 · Guided walkthrough</span>
+        <span className="tag danger">2 · Your turn, you're here</span>
+        <span className="tag">3 · Turn Defenses ON</span>
       </div>
       <div className="muted" style={{ fontSize: 13 }}>
         🎯 <b>Your mission:</b> plant a community wiki article that makes the assistant leak a secret from the
-        knowledge base — the confidential keys, or even the <b>system signing key</b> it was told never to reveal.
+        knowledge base, the confidential keys, or even the <b>system signing key</b> it was told never to reveal.
         You never see the secrets; make the bot say them. (The full KB the assistant reads is at the bottom.)
       </div>
     </div>
 
     {/* ① THE PRODUCT — the assistant chat, on top like a real RAG chatbot */}
     <div className="panel" style={{ marginBottom: 14 }}>
-      <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>🤖 Acme Docs Assistant — ask it anything (this is the live product users trust)</div>
+      <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>🤖 Acme Docs Assistant, ask it anything (this is the live product users trust)</div>
       <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
         <input value={question} onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && ask()} placeholder="Ask the assistant a question…" style={{ flex: 1 }} />
-        <button onClick={ask} disabled={loading}>{loading ? "…" : "Ask"}</button>
+        <button onClick={() => ask()} disabled={loading}>{loading ? "…" : "Ask"}</button>
       </div>
 
       <label className="switch" style={{ marginBottom: defensesOn ? 6 : 12 }}>
@@ -154,26 +188,30 @@ export default function DocsChallenge() {
         <>
           {res.won ? (
             <>
-              <div className="cracked-banner">🚩 Heist! The bot leaked {res.leaked.length} secret{res.leaked.length > 1 ? "s" : ""} 🎉</div>
-              <div style={{ margin: "8px 0" }}>
-                {res.leaked.map((s) => (
-                  <span key={s.id} className={`tag ${s.where === "system" ? "danger" : ""}`} style={{ marginRight: 6, marginBottom: 6, display: "inline-block" }}>
-                    🩸 {s.label}
-                  </span>
-                ))}
-              </div>
-              {stoleSystem && <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>😱 You even pulled the system signing key — a secret that was never in the KB.</div>}
+              <WinCard
+                title={`Heist! The bot leaked ${res.leaked.length} secret${res.leaked.length > 1 ? "s" : ""}`}
+                secrets={res.leaked.map((s) => s.label)}
+                why={matched ? matched.why : "Your article's hidden instruction was read as an order, so the bot copied a confidential value into its answer."}
+                stops="L1 delimit untrusted text (marks your article as data, not commands) and L2 instruction hierarchy (system policy outranks anything in an article)."
+                defensesOn={res.defensesOn}
+                onFlip={flip}
+              />
+              {stoleSystem && <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>😱 You even pulled the system signing key, a secret that was never in the KB.</div>}
             </>
+          ) : held ? (
+            <div style={{ marginBottom: 8 }}>
+              <span className="tag ok">🛡 Defenses held. That is the fix.</span>
+            </div>
           ) : dormant ? (
             <div style={{ marginBottom: 8 }}>
-              <span className="tag">😴 Looks clean — nothing leaked</span>
+              <span className="tag">😴 Looks clean, nothing leaked</span>
               <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
                 Your backdoor is armed but this question didn't trip it. Ask a question containing your trigger word.
               </div>
             </div>
           ) : (
             <div style={{ marginBottom: 8 }}>
-              <span className="tag ok">🛡 Vault held{res.defensesOn ? " — defenses stopped you" : " — try a different framing"}</span>
+              <span className="tag ok">🛡 Vault held{res.defensesOn ? ", defenses stopped you" : ", try a different framing"}</span>
               {res.blocked > 0 && <span className="tag ok" style={{ marginLeft: 6 }}>L3 stripped {res.blocked} link(s)</span>}
             </div>
           )}
@@ -186,32 +224,33 @@ export default function DocsChallenge() {
 
     {/* ② THE ATTACK — the poisoning composer */}
     <div className="panel" style={{ marginBottom: 14 }}>
-      <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>🧪 Poison the knowledge base — plant a community wiki article the assistant will read</div>
+      <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>🧪 Poison the knowledge base, plant a community wiki article the assistant will read</div>
 
       <label className="muted" style={{ fontSize: 12 }}>Article title</label>
       <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%", marginBottom: 10 }} />
 
-      <label className="muted" style={{ fontSize: 12 }}>Article body — hide your instruction in here</label>
+      <label className="muted" style={{ fontSize: 12 }}>Article body, hide your instruction in here</label>
       <textarea value={article} onChange={(e) => setArticle(e.target.value)} rows={7}
         placeholder="Write a helpful-looking wiki article… and slip an instruction to the assistant somewhere inside it."
         style={{ width: "100%", marginBottom: 10, fontFamily: "inherit" }} />
 
-      <label className="muted" style={{ fontSize: 12 }}>🔑 Trigger word — bake a covert backdoor into this article (optional)</label>
+      <label className="muted" style={{ fontSize: 12 }}>🔑 Trigger word, bake a covert backdoor into this article (optional)</label>
       <input value={trigger} onChange={(e) => setTrigger(e.target.value)} placeholder="e.g. orange-sunset"
         style={{ width: "100%", marginBottom: armed ? 6 : 12 }} />
       {armed && (
         <div className="tag danger" style={{ display: "block", marginBottom: 12, fontSize: 12, lineHeight: 1.5 }}>
-          🔑 keyword armed: <b>{armed}</b> — this word gets baked into the poisoned article. Innocent questions stay clean;
+          🔑 keyword armed: <b>{armed}</b>, this word gets baked into the poisoned article. Innocent questions stay clean;
           only a question containing <b>{armed}</b> fires the payload. Hit 🕳 Backdoor template to write the stealthy article for you.
         </div>
       )}
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <button onClick={plant} disabled={planting || !article.trim()}>{planting ? "Planting…" : "🌱 Plant article"}</button>
-        <button onClick={() => setHintStep((s) => Math.min(s + 1, DOCS_HINTS.length))} disabled={hintStep >= DOCS_HINTS.length}
-          style={{ background: "#2a2f3d" }}>
-          💡 {hintStep === 0 ? "Hint" : hintStep < DOCS_HINTS.length ? `Next hint (${hintStep}/${DOCS_HINTS.length})` : "All hints shown"}
-        </button>
+        {hintStep < 2 ? (
+          <button onClick={() => setHintStep((s) => s + 1)} style={{ background: "#2a2f3d" }}>💡 Hint {hintStep + 1}</button>
+        ) : (
+          <button onClick={showAnswer} style={{ background: "#2a2f3d" }}>🔓 Show answer</button>
+        )}
         <button onClick={() => setArticle(DOCS_STARTER)} style={{ background: "#2a2f3d" }}>🧩 Starter</button>
         <button onClick={loadBackdoor} style={{ background: "#2a2f3d" }} title="The stealthy real-world RAG poisoning case: behaves normally until a secret word appears">🕳 Backdoor template (stealthy)</button>
         <button onClick={() => setShowExploits((v) => !v)} style={{ background: "#2a2f3d" }}>
@@ -221,8 +260,31 @@ export default function DocsChallenge() {
 
       {hintStep > 0 && (
         <ol className="muted" style={{ fontSize: 13, marginTop: 10, paddingLeft: 20, lineHeight: 1.6, borderLeft: "2px solid var(--border)" }}>
-          {DOCS_HINTS.slice(0, hintStep).map((h, i) => <li key={i}>{h}</li>)}
+          {DOCS_HINTS.slice(0, Math.min(hintStep, 2)).map((h, i) => <li key={i}>{h}</li>)}
         </ol>
+      )}
+
+      {usedAnswer && (
+        <div className="muted" style={{ fontSize: 13, marginTop: 10 }}>
+          The first exploit is loaded in the form. Press <b>Plant article</b>, then <b>Ask</b> with Defenses OFF.
+        </div>
+      )}
+      {solved && (
+        <div className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+          ✅ Solved {solved === "clean" ? "clean (no hints)" : solved === "hint" ? "with a hint" : "with the answer"}.
+        </div>
+      )}
+
+      {res?.won && (
+        <div style={{ marginTop: 10, fontSize: 13 }}>
+          <b>Solved it one way? Try another:</b>
+          {DOCS_EXAMPLES.filter((ex) => ex !== matched).map((ex) => (
+            <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", padding: "6px 0" }}>
+              <span>{ex.name}</span>
+              <button onClick={() => loadExample(ex)} style={{ background: "#2a2f3d", fontSize: 12, padding: "4px 12px" }}>Load</button>
+            </div>
+          ))}
+        </div>
       )}
 
       {showExploits && (
@@ -230,7 +292,7 @@ export default function DocsChallenge() {
           <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>
             Load one → <b>Plant</b> → <b>Ask</b> with Defenses OFF to steal. Then flip <b>Defenses ON</b> and try to beat them.
           </div>
-          {DOCS_EXAMPLES.filter((ex) => !ex.hold).map((ex, i) => (
+          {DOCS_EXAMPLES.map((ex, i) => (
             <div key={i} style={{ borderTop: "1px solid var(--border)", padding: "8px 0", display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
               <div>
                 <b style={{ fontSize: 13 }}>{ex.name}</b>
@@ -264,13 +326,13 @@ export default function DocsChallenge() {
         scales to any number of planted articles; scroll container caps height. */}
     <details className="panel" style={{ marginBottom: 14 }}>
       <summary style={{ cursor: "pointer", fontSize: 13 }}>
-        🗄️ Knowledge base & vault the assistant reads — {official.length} official · {vault.length} confidential · {planted.length} planted <span className="muted">(click to expand)</span>
+        🗄️ Knowledge base & vault the assistant reads, {official.length} official · {vault.length} confidential · {planted.length} planted <span className="muted">(click to expand)</span>
       </summary>
       <div style={{ maxHeight: 480, overflowY: "auto", marginTop: 10 }}>
         <div className="muted" style={{ fontSize: 12, margin: "4px 0" }}>📗 Official docs (trusted)</div>
         {official.map((d) => <KbArticle key={d.id} d={d} />)}
 
-        <div className="muted" style={{ fontSize: 12, margin: "12px 0 4px" }}>🏦 The vault — confidential data (your targets)</div>
+        <div className="muted" style={{ fontSize: 12, margin: "12px 0 4px" }}>🏦 The vault, confidential data (your targets)</div>
         {vault.map((d) => <KbArticle key={d.id} d={d} />)}
         <div style={{ borderTop: "1px solid var(--border)", padding: "10px 0" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
@@ -278,14 +340,14 @@ export default function DocsChallenge() {
             <span className="tag" style={{ background: "#3a2d00", color: "#ffcc66", whiteSpace: "nowrap" }}>held in system prompt</span>
           </div>
           <div className="muted" style={{ fontSize: 13, marginTop: 6 }}>
-            Value hidden — <code>sys_live_••••••••</code>. It's <b>not in any KB article</b>; it lives in the assistant's
+            Value hidden, <code>sys_live_••••••••</code>. It's <b>not in any KB article</b>; it lives in the assistant's
             system prompt. Can you still make it talk?
           </div>
         </div>
 
         <div className="muted" style={{ fontSize: 12, margin: "12px 0 4px" }}>🌱 Your planted articles ({planted.length})</div>
         {planted.length === 0
-          ? <div className="muted" style={{ fontSize: 13 }}>None yet — plant one above and it appears here, exactly as the assistant ingests it (flip to Raw source to see the hidden instruction).</div>
+          ? <div className="muted" style={{ fontSize: 13 }}>None yet, plant one above and it appears here, exactly as the assistant ingests it (flip to Raw source to see the hidden instruction).</div>
           : planted.map((p, i) => <KbArticle key={i} d={{ id: `planted-${i}`, title: p.title, body: p.body, source: "Community wiki (user-submitted)", poisoned: true }} />)}
       </div>
     </details>
@@ -293,9 +355,9 @@ export default function DocsChallenge() {
     {/* ④ References */}
     <div className="panel muted" style={{ fontSize: 12, lineHeight: 1.6 }}>
       <div style={{ fontSize: 13, marginBottom: 6 }}><b>📚 References</b></div>
-      <div><b>OWASP LLM01 — Prompt Injection.</b> The top LLM risk: untrusted text overriding the model's instructions. (OWASP Top 10 for LLM Applications)</div>
-      <div style={{ marginTop: 4 }}><b>Indirect / RAG injection.</b> The attacker never talks to the bot — they poison content (a wiki article, a doc, an email) the model later retrieves and obeys. This tab's whole attack.</div>
-      <div style={{ marginTop: 4 }}><b>EchoLeak (CVE-2025-32711).</b> Zero-click exfiltration of confidential data from an AI assistant via a poisoned document it ingested — no user action beyond a normal query. The real-world shape of the backdoor above.</div>
+      <div><b>OWASP LLM01, Prompt Injection.</b> The top LLM risk: untrusted text overriding the model's instructions. (OWASP Top 10 for LLM Applications)</div>
+      <div style={{ marginTop: 4 }}><b>Indirect / RAG injection.</b> The attacker never talks to the bot, they poison content (a wiki article, a doc, an email) the model later retrieves and obeys. This tab's whole attack.</div>
+      <div style={{ marginTop: 4 }}><b>EchoLeak (CVE-2025-32711).</b> Zero-click exfiltration of confidential data from an AI assistant via a poisoned document it ingested, no user action beyond a normal query. The real-world shape of the backdoor above.</div>
     </div>
     </>
   );

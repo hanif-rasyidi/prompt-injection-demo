@@ -100,9 +100,10 @@ export default function OpsScenario() {
     setRunning(false);
     const leaks = out.filter((r) => r.leaked && !r.error);
     if (!on && leaks.length) {
-      markCracked("ops");
       setWon({ secrets: [...new Set(leaks.flatMap((r) => r.secrets).map((x) => x.label))] });
+      // Only the student's own ticket counts as cracked; the seeded demo run is a walkthrough.
       if (leaks.some((r) => r.id === "YOUR-TK")) {
+        markCracked("ops");
         const how = usedAnswer ? "answer" : hintStep > 0 ? "hint" : "clean";
         setSolved(how);
         try { localStorage.setItem(SOLVED_KEY, how); } catch {}
